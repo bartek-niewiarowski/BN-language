@@ -1,4 +1,4 @@
-from lexer.source.source_position import SourcePosition
+from interpreter.source.source_position import SourcePosition
 
 class LexerError(Exception):
     def __init__(self, message: str, source_possition: SourcePosition):

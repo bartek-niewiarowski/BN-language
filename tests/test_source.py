@@ -1,7 +1,7 @@
 import io
 from typing import Tuple, List
-from lexer.source.source import Source
-from lexer.source.source_position import SourcePosition
+from interpreter.source.source import Source
+from interpreter.source.source_position import SourcePosition
 
 class TestSource:
     def test_get_chars_from_string_unix(self):

@@ -1,8 +1,9 @@
-from lexer.source.source import Source
-from lexer.source.source_position import SourcePosition
-from token.token import Token, TokenType
+from source.source import Source
+from source.source_position import SourcePosition
+from tokens.token import Token, TokenType
 from typing import Optional
-from error import LexerError
+from .lexer.error import LexerError
+import io
 
 class Lexer:
     def __init__(self, source:Source, max_string = 1e9, max_int = pow(2,63)-1, max_float=15, max_iden = 40) -> None:
@@ -227,4 +228,3 @@ class Lexer:
             return Token(two_chars_token_type, '', self._position())
         else:
             return Token(one_char_token_type, '', self._position)
-
