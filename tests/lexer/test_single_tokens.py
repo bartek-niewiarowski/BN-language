@@ -1,6 +1,6 @@
 import io
 
-from interpreter.lexer import Lexer
+from interpreter.lexer.lexer import Lexer
 from interpreter.source.source import Source
 from interpreter.tokens.token import Token, TokenType
 
