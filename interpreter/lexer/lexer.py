@@ -5,7 +5,7 @@ from typing import Optional
 from .error import LexerError
 
 class Lexer:
-    def __init__(self, source:Source, max_string = 1e9, max_int = pow(2,63)-1, max_float=15, max_iden = 40) -> None:
+    def __init__(self, source:Source, max_string = 1000000, max_int = pow(2,63)-1, max_float=15, max_iden = 40) -> None:
         self._source = source
         self._position = SourcePosition(0, 0)
         self._max_string = max_string
@@ -48,8 +48,8 @@ class Lexer:
         return self._source.get_char()
 
     def _next_char(self):
-        self._position = self._get_position
-        return self._get_char()
+        self._position = self._get_position()
+        return self._source.next_char()
 
     def _get_position(self) -> SourcePosition:
         return self._source.get_position()
@@ -77,14 +77,14 @@ class Lexer:
             self._build_eof() \
             or self._build_number_value() \
             or self._build_string() \
-            or self._build_operators() \
-            or self._build_one_line_operator \
             or self._build_identifire_or_keyword() \
+            or self._build_one_line_operator() \
+            or self._build_operators() \
 
         if token:
             return token
 
-        raise LexerError("Can't match any token", self._previous_position)
+        raise LexerError("Can't match any token", self._position)
 
     def _build_eof(self) -> Optional[Token]:
         if self._get_char() == 'EOF':
@@ -99,7 +99,7 @@ class Lexer:
             return None
 
         i = 0
-        while char.isalpha() or char.isdigit():
+        while char not in [None, 'EOF'] and char.isalpha() or char.isdigit():
             if i == self._max_iden:
                 raise LexerError("Identifier too long", self._get_position())
             i+=1
@@ -113,10 +113,6 @@ class Lexer:
         elif buffer in self.keywords:
             if(buffer in ['true', 'false']):
                 return Token(TokenType.BOOL_VALUE, buffer, self._position)
-            if(buffer == 'and'):
-                return Token(TokenType.AND_OPERATOR, buffer, self._position)
-            if(buffer == 'or'):
-                return Token(TokenType.OR_OPERATOR, buffer, self._position)
             return Token(self.keywords[buffer], '', self._position)
         else:
             return Token(TokenType.ID, buffer, self._position)
@@ -125,8 +121,9 @@ class Lexer:
         char = self._get_char()
 
         if char in self.one_line_operators:
+            token = Token(self.one_line_operators[char], '', self._get_position())
             self._next_char()
-            return Token(self.one_line_operators[char], '', self._position)
+            return token
         return None
     
     def _build_operators(self) -> Optional[Token]:
@@ -139,10 +136,10 @@ class Lexer:
                 ("==", TokenType.EQUAL_OPERATOR)
             ) or self.build_one_or_two_char_token(
                 ("<", TokenType.LESS_THAN_OPERATOR),
-                ("<=", TokenType.LESS_THAN_OR_EQUAL_OPERATOR)
+                ("<=", TokenType.LESS_OR_EQUAL_THAN_OPERATOR)
             ) or self.build_one_or_two_char_token(
                 (">", TokenType.GREATER_THAN_OPERATOR),
-                (">=", TokenType.GREATER_THAN_OPERATOR_OR_EQUAL)
+                (">=", TokenType.GREATER_OR_EQUAL_THAN_OPERATOR)
             )
         if token:
             return token
@@ -205,7 +202,7 @@ class Lexer:
         char = self._get_char()
         int_part = 0
         while char.isdigit():
-            if int_part > self._max_int:
+            if int_part > (self._max_int - int(char)) / 10:
                 raise LexerError("Integer value too large", self._position)
 
             int_part = int_part * 10 + int(char)
@@ -224,6 +221,7 @@ class Lexer:
         self._next_char()
         if self._get_char() == two_chars_token_value[1]:
             self._next_char()
-            return Token(two_chars_token_type, '', self._position())
+            token = Token(two_chars_token_type, '', self._position)
+            return token
         else:
             return Token(one_char_token_type, '', self._position)
