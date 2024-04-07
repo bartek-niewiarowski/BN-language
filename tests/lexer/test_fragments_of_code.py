@@ -23,6 +23,22 @@ class TestFragmentsOfCode:
                 Token(TokenType.EOF, '', SourcePosition(2, 0)),
             ]
     
+    def test_array_with_different_types(self):
+        tokens = self._get_tokens_from_string('list = [10, 22.22, 12, "Bartek", [1, 2, 3]];')
+        assert [token.type for token in tokens] == [
+            TokenType.ID, TokenType.ASSIGN_OPERATOR, TokenType.LEFT_QUADRATIC_BRACKET, 
+            TokenType.INT_VALUE, TokenType.COMMA,
+            TokenType.FLOAT_VALUE, TokenType.COMMA,
+            TokenType.INT_VALUE, TokenType.COMMA,
+            TokenType.STRING_VALUE, TokenType.COMMA,
+            TokenType.LEFT_QUADRATIC_BRACKET,
+            TokenType.INT_VALUE, TokenType.COMMA,
+            TokenType.INT_VALUE, TokenType.COMMA,
+            TokenType.INT_VALUE,
+            TokenType.RIGHT_QUADRATIC_BRACKET, TokenType.RIGHT_QUADRATIC_BRACKET,
+            TokenType.SEMICOLON, TokenType.EOF
+        ]
+    
     def test_assignment_with_different_data_types(self):
         tokens = self._get_tokens_from_string('x = 10; y = "text"; z = true;')
         assert [token.type for token in tokens] == [
@@ -83,10 +99,29 @@ class TestFragmentsOfCode:
             TokenType.SEMICOLON, TokenType.EOF
         ]
     
+    def test_generate_tokens_from_file(self):
+        tokens = self._get_tokens_from_file('tests/data/test.bn')
+        assert [token.type for token in tokens] == [
+            TokenType.DEF, TokenType.ID,
+            TokenType.LEFT_BRACKET, TokenType.ID,
+            TokenType.COMMA, TokenType.ID,
+            TokenType.RIGHT_BRACKET, TokenType.LEFT_CURLY_BRACKET,
+            TokenType.RETURN_NAME,TokenType.LEFT_BRACKET, 
+            TokenType.ID, TokenType.ADD_OPERATOR, TokenType.ID,
+            TokenType.RIGHT_BRACKET, TokenType.SEMICOLON, 
+            TokenType.RIGHT_CURLY_BRACKET, TokenType.EOF
+        ]
+    
     @staticmethod
     def _get_tokens_from_string(string: str) -> List[Token]:
         source = Source(io.StringIO(string))
         lexer = Lexer(source)
 
         return list(tokens_generator(lexer))
-
+    
+    @staticmethod
+    def _get_tokens_from_file(path: str) -> List[Token]:
+        with open(path, 'r') as file:
+            source = Source(file)
+            lexer = Lexer(source)
+            return list(tokens_generator(lexer))

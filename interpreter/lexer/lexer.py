@@ -26,7 +26,8 @@ class Lexer:
             "]": TokenType.RIGHT_QUADRATIC_BRACKET,
             ";": TokenType.SEMICOLON,
             ",": TokenType.COMMA,
-            ".": TokenType.DOT
+            ".": TokenType.DOT,
+            "$": TokenType.LAMBDA_ID
         }
 
         self.keywords = {
@@ -133,7 +134,8 @@ class Lexer:
                 ("!=", TokenType.NOT_EQUAL_OPERATOR)
             ) or self.build_one_or_two_char_token(
                 ("=", TokenType.ASSIGN_OPERATOR),
-                ("==", TokenType.EQUAL_OPERATOR)
+                ("==", TokenType.EQUAL_OPERATOR),
+                ("=>", TokenType.LAMBDA_OPERATOR)
             ) or self.build_one_or_two_char_token(
                 ("<", TokenType.LESS_THAN_OPERATOR),
                 ("<=", TokenType.LESS_OR_EQUAL_THAN_OPERATOR)
@@ -211,7 +213,7 @@ class Lexer:
         return int_part
     
     def build_one_or_two_char_token(self, one_char_token: tuple[str, TokenType],
-                                    two_chars_token: tuple[str, TokenType]) -> Optional[Token]:
+                                    two_chars_token: tuple[str, TokenType], two_chars_token_opt: tuple[str, TokenType] = None) -> Optional[Token]:
         one_char_token_value, one_char_token_type = one_char_token
         two_chars_token_value, two_chars_token_type = two_chars_token
 
@@ -222,6 +224,10 @@ class Lexer:
         if self._get_char() == two_chars_token_value[1]:
             self._next_char()
             token = Token(two_chars_token_type, '', self._position)
+            return token
+        elif two_chars_token_opt and self._get_char() == two_chars_token_opt[0][1]:
+            self._next_char()
+            token = Token(two_chars_token_opt[1], '', self._position)
             return token
         else:
             return Token(one_char_token_type, '', self._position)

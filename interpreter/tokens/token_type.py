@@ -11,6 +11,7 @@ class TokenType(Enum):
     MUL_OPERATOR = auto()
     MUL_OPRATOR = auto()
     DIV_OPERATOR = auto()
+    LAMBDA_ID = auto()
     NEGATION_OPERATOR = auto()
     EQUAL_OPERATOR = auto()
     NOT_EQUAL_OPERATOR = auto()
@@ -18,6 +19,7 @@ class TokenType(Enum):
     GREATER_THAN_OPERATOR = auto()
     LESS_OR_EQUAL_THAN_OPERATOR = auto()
     GREATER_OR_EQUAL_THAN_OPERATOR = auto()
+    LAMBDA_OPERATOR = auto()
 
     INT_VALUE = auto()
     FLOAT_VALUE = auto()

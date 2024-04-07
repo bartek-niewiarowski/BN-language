@@ -181,6 +181,11 @@ class TestEverySingleToken:
         token = self._get_token('.')
         assert token.type == TokenType.DOT
         assert token.position == SourcePosition(1, 1)
+    
+    def test_lambda_id(self):
+        token = self._get_token('$')
+        assert token.type == TokenType.LAMBDA_ID
+        assert token.position == SourcePosition(1, 1)
 
     def test_less_or_equal(self):
         token = self._get_token('<=')
@@ -205,6 +210,11 @@ class TestEverySingleToken:
     def test_equal(self):
         token = self._get_token('==')
         assert token.type == TokenType.EQUAL_OPERATOR
+        assert token.position == SourcePosition(1, 2)
+    
+    def test_lambda_operator(self):
+        token = self._get_token('=>')
+        assert token.type == TokenType.LAMBDA_OPERATOR
         assert token.position == SourcePosition(1, 2)
     
     def test_not_equal(self):
