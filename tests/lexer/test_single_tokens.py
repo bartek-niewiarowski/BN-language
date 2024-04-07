@@ -221,6 +221,10 @@ class TestEverySingleToken:
         token = self._get_token('!')
         assert token.type == TokenType.NEGATION_OPERATOR
         assert token.position == SourcePosition(1, 1)
+    
+    def test_no_match_token(self):
+        with pytest.raises(LexerError) as exc_info:
+            self._get_token('_')
 
     @staticmethod
     def _get_token(string: str) -> Token:

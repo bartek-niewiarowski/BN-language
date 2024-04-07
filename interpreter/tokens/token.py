@@ -11,3 +11,6 @@ class Token:
     
     def __str__(self):
         return f'position: {self.position.line}:{self.position.column},type: {self.type},value: {self.value}'
+    
+    def __eq__(self, other):
+        return self.type == other.type and self.value == other.value and self.position == other.position

@@ -225,3 +225,8 @@ class Lexer:
             return token
         else:
             return Token(one_char_token_type, '', self._position)
+
+def tokens_generator(lexer: Lexer):
+    while (new_token := lexer.get_next_token()).type != TokenType.EOF:
+        yield new_token
+    yield new_token
