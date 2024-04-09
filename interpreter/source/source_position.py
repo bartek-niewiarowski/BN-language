@@ -11,3 +11,5 @@ class SourcePosition:
     
     def next_line(self):
         return SourcePosition(self.line + 1, 1)
+    
+    #__eq__
