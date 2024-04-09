@@ -12,6 +12,10 @@ class TestEverySingleToken:
         token = self._get_token('')
         assert token.type == TokenType.EOF
     
+    def test_comment(self):
+        token = self._get_token('#Super jest')
+        assert token.type == TokenType.COMMENT
+    
     def test_integer(self):
         token = self._get_token('123')
         assert token.type == TokenType.INT_VALUE
@@ -29,15 +33,41 @@ class TestEverySingleToken:
         assert token.value == 123.12
         assert token.position == SourcePosition(1, 6)
     
+    def test_float_with_semicolon(self):
+        token = self._get_token('123.;')
+        assert token.type == TokenType.FLOAT_VALUE
+        assert token.value == 123.0
+        assert token.position == SourcePosition(1, 4)
+    
+    def test_float_too_many(self):
+        with pytest.raises(LexerError) as exc_info:
+            self._get_token('123.1234567891234567')
+    
     def test_float_no_fraction_part(self):
         with pytest.raises(LexerError) as exc_info:
-            self._get_token('4.')
+            self._get_token('4.a')
 
     def test_string(self):
         token = self._get_token('"Bartek"')
         assert token.type == TokenType.STRING_VALUE
         assert token.value == "Bartek"
         assert token.position == SourcePosition(1, 8)
+    
+    def test_string_with_wrong_new_line(self):
+        with pytest.raises(LexerError) as exc_info:
+            self._get_token('"Bartek\n"')
+    
+    def test_string_with_newline(self):
+        token = self._get_token('"Hello\\nWorld"')
+        assert token.type == TokenType.STRING_VALUE
+        assert token.value == "Hello\nWorld"
+        assert token.position == SourcePosition(1, 13)
+    
+    def test_string_with_many_escape(self):
+        token = self._get_token('"\\nHello\\tWorl\\"d"')
+        assert token.type == TokenType.STRING_VALUE
+        assert token.value == "\nHello\tWorl\"d"
+        assert token.position == SourcePosition(1, 15)
     
     def test_true_value(self):
         token = self._get_token('true')

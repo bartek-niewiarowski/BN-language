@@ -20,6 +20,7 @@ class TokenType(Enum):
     LESS_OR_EQUAL_THAN_OPERATOR = auto()
     GREATER_OR_EQUAL_THAN_OPERATOR = auto()
     LAMBDA_OPERATOR = auto()
+    COMMENT = auto()
 
     INT_VALUE = auto()
     FLOAT_VALUE = auto()

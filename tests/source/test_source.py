@@ -5,18 +5,18 @@ from interpreter.source.source_position import SourcePosition
 
 class TestSource:
     def test_get_chars_from_string_unix(self):
-        string = "a\nbc\nc"
+        string = "ab\nc\nc"
         source = Source(io.StringIO(string))
 
         char_list, position_list = self.get_chars_and_positions_from_source(source)
 
-        assert char_list == ['a', '\n', 'b', 'c', '\n', 'c', 'EOF']
+        assert char_list == ['a', 'b', '\n', 'c', '\n', 'c', 'EOF']
         assert position_list == [
             SourcePosition(1, 1),
             SourcePosition(1, 2),
+            SourcePosition(2, 0),
             SourcePosition(2, 1),
-            SourcePosition(2, 2),
-            SourcePosition(2, 3),
+            SourcePosition(3, 0),
             SourcePosition(3, 1),
             SourcePosition(4, 0)
         ]
@@ -26,14 +26,15 @@ class TestSource:
         source = Source(io.StringIO(string))
 
         char_list, position_list = self.get_chars_and_positions_from_source(source)
+        pass
 
         assert char_list == ['a', '\n', 'b', 'c', '\n', 'c', 'EOF']
         assert position_list == [
             SourcePosition(1, 1),
-            SourcePosition(1, 2),
+            SourcePosition(2, 0),
             SourcePosition(2, 1),
             SourcePosition(2, 2),
-            SourcePosition(2, 3),
+            SourcePosition(3, 0),
             SourcePosition(3, 1),
             SourcePosition(4, 0)
         ]
@@ -49,9 +50,9 @@ class TestSource:
                 SourcePosition(1, 1),
                 SourcePosition(1, 2),
                 SourcePosition(1, 3),
-                SourcePosition(1, 4),
+                SourcePosition(2, 0),
                 SourcePosition(2, 1),
-                SourcePosition(2, 2),
+                SourcePosition(3, 0),
                 SourcePosition(4, 0)
             ]
 

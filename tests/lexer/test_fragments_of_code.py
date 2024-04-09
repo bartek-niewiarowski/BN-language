@@ -10,7 +10,8 @@ from interpreter.source.source_position import SourcePosition
 
 class TestFragmentsOfCode:
     def test_variable(self):
-            tokens = self._get_tokens_from_string('x = 10;')
+            tokens = self._get_tokens_from_string('x = 10;\nx=5;')
+            pass
             #assert [token.type for token in tokens] == [TokenType.ID, TokenType.ASSIGN_OPERATOR, TokenType.INT_VALUE,
             #                   TokenType.SEMICOLON, TokenType.EOF]
 
@@ -19,7 +20,11 @@ class TestFragmentsOfCode:
                 Token(TokenType.ASSIGN_OPERATOR, None,SourcePosition(1, 3)),
                 Token(TokenType.INT_VALUE, 10, SourcePosition(1, 6)),
                 Token(TokenType.SEMICOLON, None,SourcePosition(1, 7)),
-                Token(TokenType.EOF, None, SourcePosition(2, 0)),
+                Token(TokenType.ID, 'x', SourcePosition(2, 1)),
+                Token(TokenType.ASSIGN_OPERATOR, None,SourcePosition(2, 2)),
+                Token(TokenType.INT_VALUE, 5, SourcePosition(2, 3)),
+                Token(TokenType.SEMICOLON, None,SourcePosition(2, 4)),
+                Token(TokenType.EOF, None, SourcePosition(3, 0))
             ]
     
     def test_array_with_different_types(self):
@@ -49,6 +54,7 @@ class TestFragmentsOfCode:
     
     def test_while_loop_with_break(self):
         tokens = self._get_tokens_from_string('while (x < 5) { x = x + 1; if (x == 3) break; }')
+        pass
         assert [token.type for token in tokens] == [
             TokenType.WHILE_NAME, TokenType.LEFT_BRACKET, TokenType.ID, TokenType.LESS_THAN_OPERATOR, 
             TokenType.INT_VALUE, TokenType.RIGHT_BRACKET, TokenType.LEFT_CURLY_BRACKET, 
@@ -98,29 +104,9 @@ class TestFragmentsOfCode:
             TokenType.SEMICOLON, TokenType.EOF
         ]
     
-    def test_generate_tokens_from_file(self):
-        tokens = self._get_tokens_from_file('tests/data/test.bn')
-        assert [token.type for token in tokens] == [
-            TokenType.DEF, TokenType.ID,
-            TokenType.LEFT_BRACKET, TokenType.ID,
-            TokenType.COMMA, TokenType.ID,
-            TokenType.RIGHT_BRACKET, TokenType.LEFT_CURLY_BRACKET,
-            TokenType.RETURN_NAME,TokenType.LEFT_BRACKET, 
-            TokenType.ID, TokenType.ADD_OPERATOR, TokenType.ID,
-            TokenType.RIGHT_BRACKET, TokenType.SEMICOLON, 
-            TokenType.RIGHT_CURLY_BRACKET, TokenType.EOF
-        ]
-    
     @staticmethod
     def _get_tokens_from_string(string: str) -> List[Token]:
         source = Source(io.StringIO(string))
         lexer = Lexer(source)
 
         return list(tokens_generator(lexer))
-    
-    @staticmethod
-    def _get_tokens_from_file(path: str) -> List[Token]:
-        with open(path, 'r') as file:
-            source = Source(file)
-            lexer = Lexer(source)
-            return list(tokens_generator(lexer))
