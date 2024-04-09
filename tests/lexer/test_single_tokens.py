@@ -41,14 +41,12 @@ class TestEverySingleToken:
     
     def test_true_value(self):
         token = self._get_token('true')
-        assert token.type == TokenType.BOOL_VALUE
-        assert token.value == 'true'
+        assert token.type == TokenType.TRUE_VALUE
         assert token.position == SourcePosition(1, 4)
     
     def test_false_value(self):
         token = self._get_token('false')
-        assert token.type == TokenType.BOOL_VALUE
-        assert token.value == 'false'
+        assert token.type == TokenType.FALSE_VALUE
         assert token.position == SourcePosition(1, 5)
     
     def test_and_value(self):

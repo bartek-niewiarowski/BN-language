@@ -24,7 +24,8 @@ class TokenType(Enum):
     INT_VALUE = auto()
     FLOAT_VALUE = auto()
     STRING_VALUE = auto()
-    BOOL_VALUE = auto()
+    TRUE_VALUE = auto()
+    FALSE_VALUE = auto()
     LIST_VALUE = auto()
 
     LEFT_BRACKET = auto()
