@@ -8,11 +8,12 @@ from .error import LexerError
 class Lexer:
     def __init__(self, source:Source, max_string = 1000000, max_int = pow(2,63)-1, max_float=15, max_iden = 40) -> None:
         self._source = source
-        self._position = SourcePosition(0, 0)
+        self._position = SourcePosition(1, 1)
         self._max_string = max_string
         self._max_int = max_int
         self._max_float = max_float
         self._max_iden = max_iden
+        self._token_start = SourcePosition(1, 1)
         self._current_char = self._source.get_char() # dodano pole przechowujace aktualny znak
 
         self.one_line_operators = {
@@ -63,8 +64,8 @@ class Lexer:
         return self._source.get_char()
 
     def _next_char(self):
-        self._position = self._get_position()
         self._source.next_char()
+        self._position = self._get_position()
         self._current_char = self._source.get_char()
 
     def _get_position(self) -> SourcePosition:
@@ -76,6 +77,7 @@ class Lexer:
 
     def get_next_token(self) -> Token:
         self._skip_whitespace()
+        self._token_start = self._position
 
         token = \
             self._build_eof() \
@@ -95,11 +97,12 @@ class Lexer:
         if self._current_char != '#':
             return None
         comment_content = []
+        self._next_char()
         while self._current_char != '\n' and self._current_char != 'EOF':
             comment_content.append(self._current_char)
             self._next_char()
         comment = ''.join(comment_content)
-        return Token(TokenType.COMMENT, comment, self._position)
+        return Token(TokenType.COMMENT, comment, self._token_start)
 
     def _build_eof(self) -> Optional[Token]:
         if self._current_char == 'EOF':
@@ -120,13 +123,13 @@ class Lexer:
         if buffer == '':
             return None
         elif tokenType := self.keywords.get(buffer): # zmiana na tokenType := self.keywords.get(buffer)
-            return Token(tokenType, None, self._position)
+            return Token(tokenType, None, self._token_start)
         else:
-            return Token(TokenType.ID, buffer, self._position)
+            return Token(TokenType.ID, buffer, self._token_start)
     
     def _build_one_line_operator(self) -> Optional[Token]:
         if tokenType := self.one_line_operators.get(self._current_char): # zmiana na tokenType := self.keywords.get(buffer)
-            token = Token(tokenType, None, self._get_position())
+            token = Token(tokenType, None, self._token_start)
             self._next_char()
             return token
         return None
@@ -180,7 +183,7 @@ class Lexer:
                 self._next_char()
         string = ''.join(string)
         self._next_char()
-        return(Token(TokenType.STRING_VALUE, string, self._position.get_possition_without_escaping(escape_counter)))
+        return(Token(TokenType.STRING_VALUE, string, self._token_start))
     
     def _build_number_value(self) -> Optional[Token]:
         if not self._get_char().isdecimal():
@@ -188,11 +191,11 @@ class Lexer:
         int_part = self.build_int_part()
         if(self._current_char == '.'):
             return self._build_float(int_part)
-        return Token(TokenType.INT_VALUE, int_part, self._position)
+        return Token(TokenType.INT_VALUE, int_part, self._token_start)
     
     def _build_float(self, int_part) -> Optional[Token]:
         self._next_char()
-        if not self._current_char.isdecimal() and self._current_char != ';':
+        if not self._current_char.isdecimal() and self._current_char != ';': # do wyrzucenia
             raise LexerError("Invalid character in float number, you should use digitals", self._get_position())
         
         fractional_part = 0
@@ -204,7 +207,7 @@ class Lexer:
             fractional_part = fractional_part * 10 + int(self._current_char)
             self._next_char()
         total_number = float(int_part) + fractional_part * 10 ** -i
-        return(Token(TokenType.FLOAT_VALUE, total_number, self._position))
+        return(Token(TokenType.FLOAT_VALUE, total_number, self._token_start))
         
     def build_int_part(self) -> int:
         int_part = 0
@@ -229,7 +232,7 @@ class Lexer:
                 token = Token(element[1], None, self._source.get_position())
                 self._next_char()
                 return token  
-        return Token(one_char_token_type, None, self._position)
+        return Token(one_char_token_type, None, self._token_start)
 
 def tokens_generator(lexer: Lexer):
     while (new_token := lexer.get_next_token()).type != TokenType.EOF:

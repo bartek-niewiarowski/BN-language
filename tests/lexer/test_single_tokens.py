@@ -20,7 +20,7 @@ class TestEverySingleToken:
         token = self._get_token('123')
         assert token.type == TokenType.INT_VALUE
         assert token.value == 123
-        assert token.position == SourcePosition(1, 3)
+        assert token.position == SourcePosition(1, 1)
 
     def test_integer_exceeds_limit(self):
         big_int = str(2**64)

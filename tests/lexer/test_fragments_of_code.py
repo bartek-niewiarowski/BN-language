@@ -11,14 +11,13 @@ from interpreter.source.source_position import SourcePosition
 class TestFragmentsOfCode:
     def test_variable(self):
             tokens = self._get_tokens_from_string('x = 10;\nx=5;')
-            pass
             #assert [token.type for token in tokens] == [TokenType.ID, TokenType.ASSIGN_OPERATOR, TokenType.INT_VALUE,
             #                   TokenType.SEMICOLON, TokenType.EOF]
 
             assert tokens == [
                 Token(TokenType.ID, 'x', SourcePosition(1, 1)),
                 Token(TokenType.ASSIGN_OPERATOR, None,SourcePosition(1, 3)),
-                Token(TokenType.INT_VALUE, 10, SourcePosition(1, 6)),
+                Token(TokenType.INT_VALUE, 10, SourcePosition(1, 5)),
                 Token(TokenType.SEMICOLON, None,SourcePosition(1, 7)),
                 Token(TokenType.ID, 'x', SourcePosition(2, 1)),
                 Token(TokenType.ASSIGN_OPERATOR, None,SourcePosition(2, 2)),
@@ -26,6 +25,22 @@ class TestFragmentsOfCode:
                 Token(TokenType.SEMICOLON, None,SourcePosition(2, 4)),
                 Token(TokenType.EOF, None, SourcePosition(2, 5))
             ]
+    
+    def test_variable_1(self):
+            tokens = self._get_tokens_from_string('x = 1000000;\nx="Bartek";')
+            pass
+            assert tokens == [
+                Token(TokenType.ID, 'x', SourcePosition(1, 1)),
+                Token(TokenType.ASSIGN_OPERATOR, None,SourcePosition(1, 3)),
+                Token(TokenType.INT_VALUE, 1000000, SourcePosition(1, 5)),
+                Token(TokenType.SEMICOLON, None,SourcePosition(1, 12)),
+                Token(TokenType.ID, 'x', SourcePosition(2, 1)),
+                Token(TokenType.ASSIGN_OPERATOR, None,SourcePosition(2, 2)),
+                Token(TokenType.STRING_VALUE, 'Bartek', SourcePosition(2, 3)),
+                Token(TokenType.SEMICOLON, None,SourcePosition(2, 11)),
+                Token(TokenType.EOF, None, SourcePosition(2, 12))
+            ]
+    
     
     def test_array_with_different_types(self):
         tokens = self._get_tokens_from_string('list = [10, 22.22, 12, "Bartek", [1, 2, 3]];')
