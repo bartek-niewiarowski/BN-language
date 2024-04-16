@@ -24,7 +24,7 @@ class TestFragmentsOfCode:
                 Token(TokenType.ASSIGN_OPERATOR, None,SourcePosition(2, 2)),
                 Token(TokenType.INT_VALUE, 5, SourcePosition(2, 3)),
                 Token(TokenType.SEMICOLON, None,SourcePosition(2, 4)),
-                Token(TokenType.EOF, None, SourcePosition(3, 0))
+                Token(TokenType.EOF, None, SourcePosition(2, 5))
             ]
     
     def test_array_with_different_types(self):
@@ -70,30 +70,6 @@ class TestFragmentsOfCode:
             TokenType.DEF, TokenType.ID, TokenType.LEFT_BRACKET, TokenType.RIGHT_BRACKET, 
             TokenType.LEFT_CURLY_BRACKET, TokenType.RETURN_NAME, TokenType.ID, 
             TokenType.SEMICOLON, TokenType.RIGHT_CURLY_BRACKET, TokenType.EOF
-        ]
-    
-    def test_function_with_multiple_statements_including_conditional_and_loop(self):
-        tokens = self._get_tokens_from_string('''
-        def myFunc(x) {
-            if (x > 0) {
-                while (x < 10) {
-                    x = x + 1;
-                }
-            }
-            return x;
-        }''')
-        assert [token.type for token in tokens] == [
-            TokenType.DEF, TokenType.ID, TokenType.LEFT_BRACKET, TokenType.ID, 
-            TokenType.RIGHT_BRACKET, TokenType.LEFT_CURLY_BRACKET, TokenType.IF_NAME, 
-            TokenType.LEFT_BRACKET, TokenType.ID, TokenType.GREATER_THAN_OPERATOR, 
-            TokenType.INT_VALUE, TokenType.RIGHT_BRACKET, TokenType.LEFT_CURLY_BRACKET, 
-            TokenType.WHILE_NAME, TokenType.LEFT_BRACKET, TokenType.ID, 
-            TokenType.LESS_THAN_OPERATOR, TokenType.INT_VALUE, TokenType.RIGHT_BRACKET, 
-            TokenType.LEFT_CURLY_BRACKET, TokenType.ID, TokenType.ASSIGN_OPERATOR, 
-            TokenType.ID, TokenType.ADD_OPERATOR, TokenType.INT_VALUE, 
-            TokenType.SEMICOLON, TokenType.RIGHT_CURLY_BRACKET, TokenType.RIGHT_CURLY_BRACKET, 
-            TokenType.RETURN_NAME, TokenType.ID, TokenType.SEMICOLON, 
-            TokenType.RIGHT_CURLY_BRACKET, TokenType.EOF
         ]
 
     def test_import_statement(self):

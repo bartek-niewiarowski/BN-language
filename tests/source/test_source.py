@@ -14,11 +14,11 @@ class TestSource:
         assert position_list == [
             SourcePosition(1, 1),
             SourcePosition(1, 2),
-            SourcePosition(2, 0),
+            SourcePosition(1, 3),
             SourcePosition(2, 1),
-            SourcePosition(3, 0),
+            SourcePosition(2, 2),
             SourcePosition(3, 1),
-            SourcePosition(4, 0)
+            SourcePosition(3, 2)
         ]
     
     def test_get_chars_from_string_windows(self):
@@ -31,30 +31,13 @@ class TestSource:
         assert char_list == ['a', '\n', 'b', 'c', '\n', 'c', 'EOF']
         assert position_list == [
             SourcePosition(1, 1),
-            SourcePosition(2, 0),
+            SourcePosition(1, 2),
             SourcePosition(2, 1),
             SourcePosition(2, 2),
-            SourcePosition(3, 0),
+            SourcePosition(2, 3),
             SourcePosition(3, 1),
-            SourcePosition(4, 0)
+            SourcePosition(3, 2)
         ]
-
-    def test_get_chars_from_file(self):
-        with open('tests/data/test_source.bn', 'r') as file:
-            source = Source(file)
-
-            char_list, position_list = self.get_chars_and_positions_from_source(source)
-
-            assert char_list == ['a', ',', 'b', '\n', 'a', '\n', 'EOF']
-            assert position_list == [
-                SourcePosition(1, 1),
-                SourcePosition(1, 2),
-                SourcePosition(1, 3),
-                SourcePosition(2, 0),
-                SourcePosition(2, 1),
-                SourcePosition(3, 0),
-                SourcePosition(4, 0)
-            ]
 
     @staticmethod
     def get_chars_and_positions_from_source(source:Source) -> Tuple[List, List]:

@@ -7,11 +7,13 @@ class Source:
     def __init__(self, source:typing.Union[io.TextIOBase, io.StringIO]) -> None:
         self.current_position = SourcePosition(1, 0)
         # usunieto pole next_position
-        self.current_char = 'EOF' # null tutaj lub 'stx'
+        self.current_char = 'STX' # null tutaj lub 'stx'
         self.source = source
         self.next_char()
 
     def next_char(self):
+        if self.current_char == '\n':
+            self.current_position = self.current_position.next_line()
         char = self.source.read(1)
 
         if char == '\r':
@@ -24,11 +26,12 @@ class Source:
 
         if not char:
             self.current_char = 'EOF'
-            self.current_position = self.current_position.next_line()
+            self.current_position = self.current_position.next_char()
         
-        elif char == '\n':
-            self.current_char = char
-            self.current_position = self.current_position.next_line()
+        #elif char == '\n':
+        #    self.current_char = char
+        #    self.current_position = self.current_position.next_char()
+        #    self.current_position.next_line()
 
         else:
             self.current_char = char
