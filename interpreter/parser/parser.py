@@ -422,9 +422,10 @@ class Parser:
     def parse_function_arguments(self):
         position = self.current_token.position
         arguments = []
-        if arg := self.parse_or_expression()
-        while arg := self.parse_or_expression():
-            arguments.append(arg)     
+        if arg := self.parse_or_expression():
+            arguments.append(arg)
+        while self.try_consume(TokenType.COMMA):
+            arguments.append(self.parse_or_expression())
         
         return FunctionArguments(position, arguments)
     

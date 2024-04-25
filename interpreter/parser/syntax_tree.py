@@ -36,9 +36,9 @@ class LambdaExpression(Node):
         self.statements = statements
 
 class FunctionArguments(Node):
-    def __init__(self, position: SourcePosition, expressions) -> None:
+    def __init__(self, position: SourcePosition, arguments) -> None:
         super().__init__(position)
-        self.expressions = expressions
+        self.arguments = arguments
 
 class Identifier(Node):
     def __init__(self, position, name) -> None:

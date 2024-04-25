@@ -50,7 +50,7 @@ class TestParseParameters:
         token = parser.try_consume(TokenType.ID)
         result = parser.parse_typical_function_call(token)
         assert result.function_name == 'foo'
-        assert len(result.arguments) == 3  # Assuming parse_arguments works correctly and returns a list of arguments
+        assert len(result.arguments.arguments) == 3  # Assuming parse_arguments works correctly and returns a list of arguments
 
     def test_function_call_without_left_bracket(self):
         parser = self._get_parser('foo 1, 2, 3)')
