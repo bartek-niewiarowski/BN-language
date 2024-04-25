@@ -56,15 +56,15 @@ class Arguments(Node):
 class Parameter(Node):
     def __init__(self, position, name) -> None:
         super().__init__(position)
-        self._name = name
+        self.name = name
 
 class ReturnStatement(Node):
-    def __init__(self,position, value):
+    def __init__(self,position, statement):
         super().__init__(position)
-        self.value = value
+        self.statement = statement
         
     def __str__(self):
-        return f'ReturnStatement({self.value})'
+        return f'ReturnStatement({self.statement})'
 
 class IfStatement(Node):
     def __init__(self, position, condition, statements, else_statement) -> None:

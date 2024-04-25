@@ -4,7 +4,6 @@ from ..tokens.token import TokenType
 from ..lexer.lexer import Lexer
 from .syntax_error import *
 from .syntax_tree import *
-import sys
 
 class Parser:
     def  __init__(self, lexer: Lexer) -> None:
@@ -164,18 +163,19 @@ class Parser:
         params.append(param)
         while self.try_consume(TokenType.COMMA):
             param = self.parse_parameter()
+            pass
             if param == None:
-                InvalidParametersDefintion(self.current_token)
+                raise InvalidParametersDefintion(self.current_token)
             elif param in params:
-                TwoParametersWithTheSameName(self.current_token, param) #ale rzucimy zla pozycje, o jeden token za daleko
+                raise TwoParametersWithTheSameName(self.current_token, param) #ale rzucimy zla pozycje, o jeden token za daleko
             else:
                 params.append(param)
         return params
 
     def parse_parameter(self):
         position = self.current_token.position
-        if param := self.try_consume(TokenType.ID).value:
-            return Parameter(position, param)
+        if param := self.try_consume(TokenType.ID):
+            return Parameter(position, param.value)
         return None
     
     # statements = "{", {statement}, "}"; 
@@ -213,23 +213,31 @@ class Parser:
     def parse_if_statement(self):
         if not self.try_consume(TokenType.IF_NAME):
             return None
+        position = self.current_token.position
         self.must_be(TokenType.LEFT_BRACKET)
         if_condition = self.parse_or_expression()
         self.must_be(TokenType.RIGHT_BRACKET)
         if_statements = self.parse_statements()
+        if len(if_statements) == 0:
+            raise EmptyBlockOfStatements(self.current_token)
         else_statements = None
         if self.try_consume(TokenType.ELSE_NAME):
             else_statements = self.parse_statements()
-        return IfStatement(if_condition, if_statements, else_statements)
+            if else_statements is not None and len(else_statements) == 0:
+                raise EmptyBlockOfStatements(self.current_token)
+        return IfStatement(position, if_condition, if_statements, else_statements)
 
     #while = "while", "(", expression, ")", statements; 
     def parse_while_statement(self):
         if self.try_consume(TokenType.WHILE_NAME):
+            position = self.current_token.position
             self.must_be(TokenType.LEFT_BRACKET)
             while_condition = self.parse_or_expression()
             self.must_be(TokenType.RIGHT_BRACKET)
             while_statements = self.parse_statements()
-            return WhileStatement(while_condition, while_statements)
+            if len(while_statements) == 0:
+                raise EmptyBlockOfStatements(self.current_token)
+            return WhileStatement(position, while_condition, while_statements)
         return None
     
     # break_statement = "break", semicolon ; 
@@ -260,11 +268,11 @@ class Parser:
         if left := self.parse_logic_expression():
             expressions = [left]
             while self.try_consume(TokenType.AND_OPERATOR):
-                if expression := self.parse_logic_expression:
+                if expression := self.parse_logic_expression():
                     expressions.append(expression)
             if len(expressions) == 1:
                 return left
-            return OrExpression(position, expressions)
+            return AndExpression(position, expressions)
         else:
             return None
 
@@ -414,6 +422,7 @@ class Parser:
     def parse_function_arguments(self):
         position = self.current_token.position
         arguments = []
+        if arg := self.parse_or_expression()
         while arg := self.parse_or_expression():
             arguments.append(arg)     
         
@@ -427,6 +436,7 @@ class Parser:
         self.must_be(TokenType.ASSIGN_OPERATOR)
         if not (assign_expr := self.parse_assign_expression()):
             raise SyntaxError()
+        self.must_be(TokenType.SEMICOLON)
         return VariableAssignment(chained_expression[0].position, object_expression, assign_expr)
     
     # assign_expression = or_expression | object_expression | function_call
