@@ -146,7 +146,7 @@ class Parser:
         if element := self.parse_typical_function_call(token):
             return element
         else:
-            return VariableName(token.position, token.value)
+            return Identifier(token.position, token.value)
     
     def parse_typical_function_call(self, token: Token):
         if not self.try_consume(TokenType.LEFT_BRACKET):
@@ -157,19 +157,19 @@ class Parser:
         
     # parameters = [ variable_name, {comma, variable_name} ]; 
     def parse_parameters(self):
-        params = []
+        params = {}
         if (param := self.parse_parameter()) == None:
             return params
-        params.append(param)
+        params[param.name] = param
         while self.try_consume(TokenType.COMMA):
             param = self.parse_parameter()
             pass
             if param == None:
                 raise InvalidParametersDefintion(self.current_token)
-            elif param in params:
+            elif params.get(param.name):
                 raise TwoParametersWithTheSameName(self.current_token, param) #ale rzucimy zla pozycje, o jeden token za daleko
             else:
-                params.append(param)
+                params[param.name] = param
         return params
 
     def parse_parameter(self):
@@ -431,7 +431,7 @@ class Parser:
     
     # variable_assignment = object_expression, assign_operator, assign_expression, semicolon; 
     def parse_variable_assignment(self, chained_expression):
-        if not isinstance(chained_expression[-1], VariableName):
+        if not isinstance(chained_expression[-1], Identifier):
             raise SyntaxError()
         object_expression = ObjectExpression(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
         self.must_be(TokenType.ASSIGN_OPERATOR)
@@ -445,7 +445,7 @@ class Parser:
         if asign_expression := self.parse_or_expression():
             return asign_expression
         if chained_expression := self.parse_chained_expression():
-            if isinstance(chained_expression[-1], VariableName):
+            if isinstance(chained_expression[-1], Identifier):
                 return ObjectExpression(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
             elif isinstance(chained_expression[-1], TypicalFunctionCall):
                 return TypicalFunctionCall(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
