@@ -3,7 +3,8 @@ import pytest
 
 from interpreter.lexer.lexer import Lexer
 from interpreter.source.source import Source
-from interpreter.tokens.token import Token, TokenType
+from interpreter.tokens.token import Token
+from interpreter.tokens.token_type import TokenType
 from interpreter.lexer.error import LexerError
 from interpreter.source.source_position import SourcePosition
 
@@ -31,13 +32,13 @@ class TestEverySingleToken:
         token = self._get_token('123.12')
         assert token.type == TokenType.FLOAT_VALUE
         assert token.value == 123.12
-        assert token.position == SourcePosition(1, 6)
+        assert token.position == SourcePosition(1, 1)
     
     def test_float_with_semicolon(self):
         token = self._get_token('123.;')
         assert token.type == TokenType.FLOAT_VALUE
         assert token.value == 123.0
-        assert token.position == SourcePosition(1, 4)
+        assert token.position == SourcePosition(1, 1)
     
     def test_float_too_many(self):
         with pytest.raises(LexerError) as exc_info:
@@ -51,7 +52,7 @@ class TestEverySingleToken:
         token = self._get_token('"Bartek"')
         assert token.type == TokenType.STRING_VALUE
         assert token.value == "Bartek"
-        assert token.position == SourcePosition(1, 8)
+        assert token.position == SourcePosition(1, 1)
     
     def test_string_with_wrong_new_line(self):
         with pytest.raises(LexerError) as exc_info:
@@ -61,73 +62,73 @@ class TestEverySingleToken:
         token = self._get_token('"Hello\\nWorld"')
         assert token.type == TokenType.STRING_VALUE
         assert token.value == "Hello\nWorld"
-        assert token.position == SourcePosition(1, 13)
+        assert token.position == SourcePosition(1, 1)
     
     def test_string_with_many_escape(self):
         token = self._get_token('"\\nHello\\tWorl\\"d"')
         assert token.type == TokenType.STRING_VALUE
         assert token.value == "\nHello\tWorl\"d"
-        assert token.position == SourcePosition(1, 15)
+        assert token.position == SourcePosition(1, 1)
     
     def test_true_value(self):
         token = self._get_token('true')
         assert token.type == TokenType.TRUE_VALUE
-        assert token.position == SourcePosition(1, 4)
+        assert token.position == SourcePosition(1, 1)
     
     def test_false_value(self):
         token = self._get_token('false')
         assert token.type == TokenType.FALSE_VALUE
-        assert token.position == SourcePosition(1, 5)
+        assert token.position == SourcePosition(1, 1)
     
     def test_and_value(self):
         token = self._get_token('and')
         assert token.type == TokenType.AND_OPERATOR
-        assert token.position == SourcePosition(1, 3)
+        assert token.position == SourcePosition(1, 1)
     
     def test_or_value(self):
         token = self._get_token('or')
         assert token.type == TokenType.OR_OPERATOR
-        assert token.position == SourcePosition(1, 2)
+        assert token.position == SourcePosition(1, 1)
     
     def test_if_keyword(self):
         token = self._get_token('if')
         assert token.type == TokenType.IF_NAME
-        assert token.position == SourcePosition(1, 2)
+        assert token.position == SourcePosition(1, 1)
 
     def test_else_keyword(self):
         token = self._get_token('else')
         assert token.type == TokenType.ELSE_NAME
-        assert token.position == SourcePosition(1, 4)
+        assert token.position == SourcePosition(1, 1)
 
     def test_return_keyword(self):
         token = self._get_token('return')
         assert token.type == TokenType.RETURN_NAME
-        assert token.position == SourcePosition(1, 6)
+        assert token.position == SourcePosition(1, 1)
 
     def test_while_keyword(self):
         token = self._get_token('while')
         assert token.type == TokenType.WHILE_NAME
-        assert token.position == SourcePosition(1, 5)
+        assert token.position == SourcePosition(1, 1)
 
     def test_break_keyword(self):
         token = self._get_token('break')
         assert token.type == TokenType.BREAK_NAME
-        assert token.position == SourcePosition(1, 5)
+        assert token.position == SourcePosition(1, 1)
 
     def test_def_keyword(self):
         token = self._get_token('def')
         assert token.type == TokenType.DEF
-        assert token.position == SourcePosition(1, 3)
+        assert token.position == SourcePosition(1, 1)
 
     def test_from_keyword(self):
         token = self._get_token('from')
         assert token.type == TokenType.FROM_NAME
-        assert token.position == SourcePosition(1, 4)
+        assert token.position == SourcePosition(1, 1)
 
     def test_import_keyword(self):
         token = self._get_token('import')
         assert token.type == TokenType.IMPORT_NAME
-        assert token.position == SourcePosition(1, 6)
+        assert token.position == SourcePosition(1, 1)
     
     def test_identifire(self):
         token = self._get_token('x')
@@ -139,7 +140,7 @@ class TestEverySingleToken:
         token = self._get_token('BartekNiew')
         assert token.type == TokenType.ID
         assert token.value == 'BartekNiew'
-        assert token.position == SourcePosition(1, 10)
+        assert token.position == SourcePosition(1, 1)
     
     def test_identifire_too_long(self):
         with pytest.raises(LexerError) as exc_info:
