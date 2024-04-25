@@ -11,7 +11,7 @@ class Node:
 class Program(Node):
     def __init__(self, position, functions) -> None:
         super().__init__(position)
-        self.funtions = functions
+        self.functions = functions
 
 class FunctionDefintion(Node):
     def __init__(self, position, name, parameters, statements) -> None:
@@ -200,11 +200,6 @@ class VariableAssignment(Node):
     def __str__(self):
         return f'VariableAssignment(target={self.target}, value={self.value})'
 
-class VariableName(Node):
-    def __init__(self, position: SourcePosition, id) -> None:
-        super().__init__(position)
-        self.id = id
-
 class TypicalFunctionCall(Node):
     def __init__(self, position: SourcePosition, function_name, arguments) -> None:
         super().__init__(position)
@@ -215,7 +210,7 @@ class TypicalFunctionCall(Node):
         return f"TypicalFunctionCall(name:{self.function_name} arguments{self.arguments})"
 
 class ObjectExpression(Node):
-    def __init__(self, position: SourcePosition, chained_access: List[Union[VariableName, TypicalFunctionCall]], final_variable: VariableName):
+    def __init__(self, position: SourcePosition, chained_access: List[Union[Identifier, TypicalFunctionCall]], final_variable: Identifier):
         super().__init__(position)
         self.chained_access = chained_access
         self.final_variable = final_variable
@@ -224,7 +219,7 @@ class ObjectExpression(Node):
         return f"ObjectExpression({self.chained_access} -> {self.final_variable})"
 
 class FunctionCall(Node):
-    def __init__(self, position: SourcePosition, chained_call: List[Union[VariableName, TypicalFunctionCall]], last_call: TypicalFunctionCall) -> None:
+    def __init__(self, position: SourcePosition, chained_call: List[Union[Identifier, TypicalFunctionCall]], last_call: TypicalFunctionCall) -> None:
         super().__init__(position)
         self.chained_call = chained_call
         self.last_call = last_call

@@ -32,8 +32,7 @@ class TestParseandExpression:
 
     def test_no_initial_expression(self):
         parser = self._get_parser('and true')
-        with pytest.raises(InvalidStatement):
-            parser.parse_and_expression()
+        assert parser.parse_and_expression() is None
 
     def test_and_expression_complex(self):
         parser = self._get_parser('x > 1 and y < 2 and z == 3')

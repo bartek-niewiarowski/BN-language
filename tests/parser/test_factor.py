@@ -52,13 +52,11 @@ class TestParseFactor:
 
     def test_no_expression_in_parentheses(self):
         parser = self._get_parser('()')
-        with pytest.raises(InvalidStatement):
-            parser.parse_factor()
+        assert parser.parse_factor() is None
 
     def test_empty_input(self):
         parser = self._get_parser('')
-        with pytest.raises(InvalidStatement):
-            parser.parse_factor()
+        assert parser.parse_factor() is None
     
     @staticmethod
     def _get_parser(string: str) -> Parser:

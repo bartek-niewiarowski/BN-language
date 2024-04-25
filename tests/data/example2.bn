@@ -1,20 +1,14 @@
-Def exampleFunction () { 
-# przykrycie zmiennej globalnej
-Variable = 4;
-}
-
-# definicja funkcji wykorzystującej rekurencję
-Def fibonacci (x)
+def fibonacci(x)
 {
-If( x <= 1) {
+if( x <= 1) {
 
-Return x;
+Return (x);
 
 }
 
-Else {
+else {
 
-Return fibonacci(x-1) + fibonacci(x-2)
+Return (fibonacci(x-1) + fibonacci(x-2));
 
 } 
 

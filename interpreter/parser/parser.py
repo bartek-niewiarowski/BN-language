@@ -73,10 +73,9 @@ class Parser:
         functions = {}
         position = self.current_token.position
         while funDef := self.parse_function_definition():
-            if name := funDef.name in functions:
-                RedefintionFuntionError(self.current_token, name)
-            else:
-                functions[name] = funDef
+            if functions.get(funDef.name):
+                raise RedefintionFuntionError(self.current_token, funDef.name)
+            functions[funDef.name] = funDef
         return Program(position, functions)
     
     # function_definition = "def", function_name, "(", parameters , ")" , statements; 
@@ -89,8 +88,8 @@ class Parser:
         params = self.parse_parameters()
         self.must_be(TokenType.RIGHT_BRACKET)
         statements = self.parse_statements()
-        if statements is None:
-            EmptyBlockOfStatements(self.current_token)
+        if len(statements) == 0:
+            raise EmptyBlockOfStatements(self.current_token)
         return FunctionDefintion(position, name, params, statements)
 
     # include_statement = "from", library_name, "import", object_name, 	{coma, object_name}, semicolon; 
@@ -114,7 +113,7 @@ class Parser:
         if not self.try_consume(TokenType.LAMBDA_ID):
             return None
         position = self.current_token.position
-        variable_name = self.must_be(TokenType.ID)
+        variable_name = self.must_be(TokenType.ID).value
 
         self.must_be(TokenType.LAMBDA_OPERATOR)
         statements = self.parse_statements()
@@ -124,6 +123,7 @@ class Parser:
     def parse_function_call_or_variable_assignment(self):
         if chained_expression := self.parse_chained_expression():
             if isinstance(chained_expression[-1], TypicalFunctionCall):
+                self.must_be(TokenType.SEMICOLON)
                 return FunctionCall(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
             return self.parse_variable_assignment(chained_expression)
         return None
@@ -194,7 +194,6 @@ class Parser:
             or self.parse_break_statement() \
             or self.parse_while_statement() \
             or self.parse_function_call_or_variable_assignment()
-
         if stm:
             return stm
         return None
@@ -215,7 +214,8 @@ class Parser:
             return None
         position = self.current_token.position
         self.must_be(TokenType.LEFT_BRACKET)
-        if_condition = self.parse_or_expression()
+        if not (if_condition := self.parse_or_expression()):
+            raise InvalidStatement(self.current_token, "abc")
         self.must_be(TokenType.RIGHT_BRACKET)
         if_statements = self.parse_statements()
         if len(if_statements) == 0:
@@ -232,7 +232,8 @@ class Parser:
         if self.try_consume(TokenType.WHILE_NAME):
             position = self.current_token.position
             self.must_be(TokenType.LEFT_BRACKET)
-            while_condition = self.parse_or_expression()
+            if not (while_condition := self.parse_or_expression()):
+                raise InvalidStatement(self.current_token, "abc")
             self.must_be(TokenType.RIGHT_BRACKET)
             while_statements = self.parse_statements()
             if len(while_statements) == 0:
@@ -256,6 +257,8 @@ class Parser:
             while self.try_consume(TokenType.OR_OPERATOR):
                 if expression := self.parse_and_expression():
                     expressions.append(expression)
+                else:
+                    raise InvalidStatement(self.current_token, "abc")
             if len(expressions) == 1:
                 return left
             return OrExpression(position, expressions)
@@ -270,6 +273,8 @@ class Parser:
             while self.try_consume(TokenType.AND_OPERATOR):
                 if expression := self.parse_logic_expression():
                     expressions.append(expression)
+                else:
+                    raise InvalidStatement(self.current_token, "abc")
             if len(expressions) == 1:
                 return left
             return AndExpression(position, expressions)
@@ -281,9 +286,11 @@ class Parser:
         position = self.current_token.position
         if left := self.parse_arth_expression():
             if token := self.try_consume(self.LOGIC_OPERATORS):
-                right = self.parse_arth_expression()
-                return LOGIC_OPERATIONS_MAPPING.get(token.type)(position, left, right)
-            return left        
+                if right := self.parse_arth_expression():
+                    return LOGIC_OPERATIONS_MAPPING.get(token.type)(position, left, right)
+                raise InvalidStatement(self.current_token, "abc")
+            return left
+        return None        
     
     # arth_expression = term, {sum_operator, term}; 
     def parse_arth_expression(self):
@@ -291,15 +298,16 @@ class Parser:
         if left := self.parse_term():
             expressions = [left]
             while (token := self.try_consume(self.ARTH_OPERATORS)):
-                next_expr = self.parse_term()
+                if not (next_expr := self.parse_term()):
+                    raise InvalidStatement(self.current_token, "abc")
                 if token.type == TokenType.SUB_OPERATOR:
                     next_expr = Negation(token.type, next_expr)
-                expressions.append(next_expr)
-                    
+                expressions.append(next_expr)                   
             if len(expressions) == 1:
                 return left
             else:
                 return ArthExpression(position, expressions)
+        return None
     
     # term = factor, { multiply_operator, factor }; 
     def parse_term(self):
@@ -307,11 +315,12 @@ class Parser:
         if left := self.parse_factor():
             expressions = [left]
             while (token := self.try_consume(self.TERM_OPERATORS)):
-                next_expr = self.parse_factor()
-                if token.type == TokenType.DIV_OPERATOR:
-                    next_expr = Reciprocal(next_expr.position, next_expr)
-                expressions.append(next_expr)
-                    
+                if next_expr := self.parse_factor():
+                    if token.type == TokenType.DIV_OPERATOR:
+                        next_expr = Reciprocal(next_expr.position, next_expr)
+                    expressions.append(next_expr)
+                else:
+                    raise InvalidStatement(self.current_token, "abc")                    
             if len(expressions) == 1:
                 return left
             else:
@@ -330,7 +339,9 @@ class Parser:
             for _ in range(negation_counter):
                 factor = Negation(position, factor)
             return factor
-        raise InvalidStatement(self.current_token, 'abc')
+        if negation_counter > 0 and not factor:
+            raise InvalidStatement(self.current_token, "abc")
+        return None
 
     #variable_value = bool_value | int_value | float_value| string_value | array | variable_name;
     def parse_variable_value(self):
@@ -416,7 +427,6 @@ class Parser:
         arguments = \
         self.parse_lambda_expression() \
         or self.parse_function_arguments()
-
         return arguments
     
     def parse_function_arguments(self):

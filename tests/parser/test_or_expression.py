@@ -29,11 +29,11 @@ class TestParseOrExpression:
 
     def test_no_initial_expression(self):
         parser = self._get_parser('or y < 2')
-        with pytest.raises(InvalidStatement):
-            parser.parse_or_expression()
+        assert parser.parse_or_expression() is None
 
     def test_or_expression_complex(self):
         parser = self._get_parser('x > 1 or y < 2 or z == 3')
+        pass
         result = parser.parse_or_expression()
         assert hasattr(result, 'nodes') and len(result.nodes) == 3
 
