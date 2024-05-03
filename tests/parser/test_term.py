@@ -44,8 +44,8 @@ class TestParseTerm:
     def test_no_operators(self):
         parser = self._get_parser('x')
         result = parser.parse_term()
-        assert isinstance(result, Identifier)
-        assert result.name == 'x'
+        assert isinstance(result, ObjectExpression)
+        assert result.final_variable.name == 'x'
 
     def test_invalid_syntax_after_operator(self):
         parser = self._get_parser('x *')

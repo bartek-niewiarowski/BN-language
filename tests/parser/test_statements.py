@@ -150,8 +150,6 @@ class TestParseStatements:
     
     def test_parse_valid_function_call_or_variable_assignment_1(self):
         parser = self._get_parser('x = sum(a, b);')
-        result = parser.parse_statement()
-        pass
         assert hasattr(parser.parse_statement(), 'target')
     
     def test_parse_multiple_statements(self):

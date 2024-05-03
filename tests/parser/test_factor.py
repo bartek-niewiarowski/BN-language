@@ -48,7 +48,7 @@ class TestParseFactor:
     def test_parse_variable(self):
         parser = self._get_parser('x')
         result = parser.parse_factor()
-        assert hasattr(result, 'name') and result.name == 'x'
+        assert hasattr(result, 'final_variable') and result.final_variable.name == 'x'
 
     def test_no_expression_in_parentheses(self):
         parser = self._get_parser('()')

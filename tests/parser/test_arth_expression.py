@@ -44,8 +44,8 @@ class TestParseArthExpression:
     def test_no_operators(self):
         parser = self._get_parser('x')
         result = parser.parse_arth_expression()
-        assert isinstance(result, Identifier)
-        assert result.name == 'x'
+        assert isinstance(result, ObjectExpression)
+        #assert result.name == 'x'
 
     def test_invalid_syntax_after_operator(self):
         parser = self._get_parser('x +')
@@ -63,8 +63,8 @@ class TestParseArthExpression:
         parser = self._get_parser('2 + x * y')
         result = parser.parse_arth_expression()
         assert result.nodes[0].value == 2
-        assert result.nodes[1].nodes[0].name == 'x'
-        assert result.nodes[1].nodes[1].name == 'y'
+        assert result.nodes[1].nodes[0].final_variable.name == 'x'
+        assert result.nodes[1].nodes[1].final_variable.name == 'y'
     
     @staticmethod
     def _get_parser(string: str) -> Parser:

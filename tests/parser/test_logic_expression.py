@@ -20,21 +20,22 @@ class TestParseLogicExpression:
     def test_logic_expression_with_equal_operator(self):
         parser = self._get_parser('x == y')
         result = parser.parse_logic_expression()
-        assert hasattr(result, 'left') and hasattr(result.left, 'name')
-        assert hasattr(result, 'right') and hasattr(result.right, 'name')
+        pass
+        assert hasattr(result, 'left') and hasattr(result.left, 'final_variable')
+        assert hasattr(result, 'right') and hasattr(result.right, 'final_variable')
 
     def test_logic_expression_with_greater_than_operator(self):
         parser = self._get_parser('x > y')
         result = parser.parse_logic_expression()
-        assert hasattr(result, 'left') and hasattr(result.left, 'name')
-        assert hasattr(result, 'right') and hasattr(result.right, 'name')
+        assert hasattr(result, 'left') and hasattr(result.left, 'final_variable')
+        assert hasattr(result, 'right') and hasattr(result.right, 'final_variable')
 
     def test_logic_expression_with_multiple_operators(self):
         # Assuming only the first operator is parsed by `parse_logic_expression`
         parser = self._get_parser('x < y == z')
         result = parser.parse_logic_expression()
-        assert hasattr(result, 'left') and hasattr(result.left, 'name')
-        assert hasattr(result, 'right') and hasattr(result.right, 'name')
+        assert hasattr(result, 'left') and hasattr(result.left, 'final_variable')
+        assert hasattr(result, 'right') and hasattr(result.right, 'final_variable')
 
     def test_missing_right_expression(self):
         parser = self._get_parser('x <')
