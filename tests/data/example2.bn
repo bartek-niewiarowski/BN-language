@@ -2,13 +2,15 @@ def fibonacci(x)
 {
 if( x <= 1) {
 
-Return (x);
+return (x);
 
 }
 
 else {
 
-Return (fibonacci(x-1) + fibonacci(x-2));
+a = fibonacci(x-1);
+b = fibonacci(x-2);
+return ( a + b );
 
 } 
 

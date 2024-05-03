@@ -264,6 +264,18 @@ class Parser:
             return OrExpression(position, expressions)
         else:
             return None
+    
+    def parse_or_expression_with_1_left(self, left):
+        position = self.current_token.position
+        expressions = [left]
+        while self.try_consume(TokenType.OR_OPERATOR):
+            if expression := self.parse_and_expression():
+                expressions.append(expression)
+            else:
+                raise InvalidStatement(self.current_token, "abc")
+        if len(expressions) == 1:
+            return left
+        return OrExpression(position, expressions)
 
     # and_expresion = relation_expresion, {"and", relation_condition}; 
     def parse_and_expression(self):
@@ -451,7 +463,7 @@ class Parser:
         return VariableAssignment(chained_expression[0].position, object_expression, assign_expr)
     
     # assign_expression = or_expression | object_expression | function_call
-    def parse_assign_expression(self):
+    def parse_assign_expression_1(self):
         if asign_expression := self.parse_or_expression():
             return asign_expression
         if chained_expression := self.parse_chained_expression():
@@ -461,4 +473,21 @@ class Parser:
                 return TypicalFunctionCall(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
             else:
                 raise SyntaxError()
+        return None
+
+    # assign_expression = or_expression | object_expression | function_call
+    def parse_assign_expression(self):
+        current_token = self.current_token
+        if chained_expression := self.parse_chained_expression():
+            if isinstance(chained_expression[-1], Identifier):
+                if len(chained_expression) == 1:
+                    self.current_token = current_token
+                    return self.parse_or_expression()
+                return ObjectExpression(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
+            elif isinstance(chained_expression[-1], TypicalFunctionCall):
+                return TypicalFunctionCall(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
+            else:
+                raise SyntaxError()
+        if or_expression := self.parse_or_expression():
+            return or_expression
         return None

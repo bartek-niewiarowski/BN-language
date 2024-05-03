@@ -101,6 +101,11 @@ class TestParseParameters:
         result = parser.parse_function_call_or_variable_assignment()
         assert isinstance(result, FunctionCall)
     
+    def test_function_call_with_args(self):
+        parser = self._get_parser('obj.sum(a+b);')
+        result = parser.parse_function_call_or_variable_assignment()
+        pass
+     
     def test_function_call_with_no_chaining(self):
         parser = self._get_parser('doSomething();')
         result = parser.parse_function_call_or_variable_assignment()

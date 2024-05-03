@@ -8,7 +8,7 @@ def main()
     Dane = Imie + " " + Nazwisko;
     print(Dane);
     C = A + B;
-    result = Fibonacci(C);
+    result = Fibonacci(5);
     print(result);
     return (0);
 }
