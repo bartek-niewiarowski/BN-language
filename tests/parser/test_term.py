@@ -49,7 +49,7 @@ class TestParseTerm:
 
     def test_invalid_syntax_after_operator(self):
         parser = self._get_parser('x *')
-        with pytest.raises(InvalidStatement):
+        with pytest.raises(InvalidTerm):
             parser.parse_term()
 
     def test_division_by_zero_static(self):

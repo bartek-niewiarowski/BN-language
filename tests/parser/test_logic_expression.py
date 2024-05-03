@@ -39,12 +39,12 @@ class TestParseLogicExpression:
 
     def test_missing_right_expression(self):
         parser = self._get_parser('x <')
-        with pytest.raises(InvalidStatement):
+        with pytest.raises(InvalidLogicExpression):
             parser.parse_logic_expression()
 
     def test_invalid_right_expression(self):
         parser = self._get_parser('x < +')
-        with pytest.raises(InvalidStatement):
+        with pytest.raises(InvalidLogicExpression):
             parser.parse_logic_expression()
 
     def test_complex_arithmetic_expression(self):

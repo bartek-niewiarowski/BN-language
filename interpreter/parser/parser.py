@@ -59,14 +59,6 @@ class Parser:
         token = self.current_token
         self.consume_token()
         return token
-    
-    def check_parsed(self, expr, type):
-        if expr is None:
-            if isinstance(type, TokenType):
-                self.raise_exception(type)
-            else:
-                raise SyntaxError
-        return expr
 
     # program = { function_definition }; 
     def parse_program(self):
@@ -170,6 +162,7 @@ class Parser:
             return params
         params[param.name] = param
         while self.try_consume(TokenType.COMMA):
+            position = self.current_token.position
             param = self.parse_parameter()
             pass
             if param == None:
@@ -223,7 +216,7 @@ class Parser:
         position = self.current_token.position
         self.must_be(TokenType.LEFT_BRACKET)
         if not (if_condition := self.parse_or_expression()):
-            raise InvalidStatement(self.current_token, "abc")
+            raise EmptyIfCondition(self.current_token)
         self.must_be(TokenType.RIGHT_BRACKET)
         if_statements = self.parse_statements()
         if len(if_statements) == 0:
@@ -266,24 +259,12 @@ class Parser:
                 if expression := self.parse_and_expression():
                     expressions.append(expression)
                 else:
-                    raise InvalidStatement(self.current_token, "abc")
+                    raise InvalidOrExpression(self.current_token)
             if len(expressions) == 1:
                 return left
             return OrExpression(position, expressions)
         else:
             return None
-    
-    def parse_or_expression_with_1_left(self, left):
-        position = self.current_token.position
-        expressions = [left]
-        while self.try_consume(TokenType.OR_OPERATOR):
-            if expression := self.parse_and_expression():
-                expressions.append(expression)
-            else:
-                raise InvalidStatement(self.current_token, "abc")
-        if len(expressions) == 1:
-            return left
-        return OrExpression(position, expressions)
 
     # and_expresion = relation_expresion, {"and", relation_condition}; 
     def parse_and_expression(self):
@@ -294,7 +275,7 @@ class Parser:
                 if expression := self.parse_logic_expression():
                     expressions.append(expression)
                 else:
-                    raise InvalidStatement(self.current_token, "abc")
+                    raise InvalidAndExpression(self.current_token)
             if len(expressions) == 1:
                 return left
             return AndExpression(position, expressions)
@@ -308,7 +289,7 @@ class Parser:
             if token := self.try_consume(self.LOGIC_OPERATORS):
                 if right := self.parse_arth_expression():
                     return LOGIC_OPERATIONS_MAPPING.get(token.type)(position, left, right)
-                raise InvalidStatement(self.current_token, "abc")
+                raise InvalidLogicExpression(self.current_token)
             return left
         return None        
     
@@ -319,7 +300,7 @@ class Parser:
             expressions = [left]
             while (token := self.try_consume(self.ARTH_OPERATORS)):
                 if not (next_expr := self.parse_term()):
-                    raise InvalidStatement(self.current_token, "abc")
+                    raise InvalidArthExpression(self.current_token)
                 if token.type == TokenType.SUB_OPERATOR:
                     next_expr = Negation(token.type, next_expr)
                 expressions.append(next_expr)                   
@@ -340,13 +321,12 @@ class Parser:
                         next_expr = Reciprocal(next_expr.position, next_expr)
                     expressions.append(next_expr)
                 else:
-                    raise InvalidStatement(self.current_token, "abc")                    
+                    raise InvalidTerm(self.current_token)                    
             if len(expressions) == 1:
                 return left
             else:
                 return Term(position, expressions)
     
-    # factor = {negation_operator}, variable_value | "(", arth_expression, ")";
     # factor = {negation_operator}, variable_value | object_expression | function_call | "(", arth_expression, ")"; 
     def parse_factor(self):
         position = self.current_token.position
@@ -362,18 +342,17 @@ class Parser:
                 factor = Negation(position, factor)
             return factor
         if negation_counter > 0 and not factor:
-            raise InvalidStatement(self.current_token, "abc")
+            raise InvalidFactor(self.current_token)
         return None
+    
     #variable_value = bool_value | int_value | float_value| string_value | array;
-    #variable_value = bool_value | int_value | float_value| string_value | array | variable_name;
     def parse_variable_value(self):
         variable_value = \
             self.parse_boolean()    \
             or self.parse_number()  \
             or self.parse_float()   \
             or self.parse_string()  \
-            or self.parse_array()   \
-            #or self.parse_variable_name()
+            or self.parse_array()
         if variable_value:
             return variable_value
         return None
@@ -436,13 +415,6 @@ class Parser:
             raise SyntaxError("Expected ']' at the end of array at position {}".format(position))
         
         return Array(position, elements)
-    
-    # variable_name = identifier;
-    def parse_variable_name(self):
-        position = self.current_token.position
-        if token := self.try_consume(TokenType.ID):
-            return Identifier(position, token.value)
-        return None
     
     # arguments = [ expression, {comma, expression} ] | lambda_expression; 
     def parse_arguments(self):

@@ -22,12 +22,11 @@ class TestParseandExpression:
         result = parser.parse_and_expression()
         pass
         assert hasattr(result, 'nodes') and len(result.nodes) == 2
-        # Check for the correct values of the expressions
         assert all(hasattr(expr, 'position') for expr in result.nodes)
 
     def test_logic_expression_with_incomplete_and(self):
         parser = self._get_parser('true and')
-        with pytest.raises(InvalidStatement):
+        with pytest.raises(InvalidAndExpression):
             parser.parse_and_expression()
 
     def test_no_initial_expression(self):

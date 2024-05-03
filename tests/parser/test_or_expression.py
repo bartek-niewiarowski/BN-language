@@ -24,7 +24,7 @@ class TestParseOrExpression:
 
     def test_or_expression_with_incomplete_and(self):
         parser = self._get_parser('x > 1 or')
-        with pytest.raises(InvalidStatement):
+        with pytest.raises(InvalidOrExpression):
             parser.parse_or_expression()
 
     def test_no_initial_expression(self):

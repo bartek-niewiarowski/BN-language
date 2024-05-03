@@ -93,7 +93,7 @@ class TestParseStatements:
 
     def test_if_with_invalid_condition(self):
         parser = self._get_parser('if () { x = x + 1; }')
-        with pytest.raises(InvalidStatement):
+        with pytest.raises(EmptyIfCondition):
             parser.parse_if_statement()
 
     def test_if_else_without_statements(self):

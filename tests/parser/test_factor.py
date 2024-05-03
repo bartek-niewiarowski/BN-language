@@ -42,7 +42,7 @@ class TestParseFactor:
         parser = self._get_parser('42 -')
         result = parser.parse_factor()
         assert hasattr(result, 'value')
-        with pytest.raises(InvalidStatement):  # Assuming it raises an InvalidStatement error
+        with pytest.raises(InvalidFactor):  # Assuming it raises an InvalidStatement error
             parser.parse_factor()
 
     def test_parse_variable(self):

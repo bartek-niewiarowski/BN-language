@@ -49,7 +49,7 @@ class TestParseArthExpression:
 
     def test_invalid_syntax_after_operator(self):
         parser = self._get_parser('x +')
-        with pytest.raises(InvalidStatement):
+        with pytest.raises(InvalidArthExpression):
             parser.parse_arth_expression()
 
     def test_complex_expression_with_parentheses(self):
