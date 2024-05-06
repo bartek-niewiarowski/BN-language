@@ -73,10 +73,13 @@ class TestParseTerm:
         assert len(result.nodes) == 2
         assert isinstance(result.nodes[1], ArthExpression)  # Assuming this parses as an arithmetic expression
 
-    #def test_unexpected_token(self):
-    #    parser = self._get_parser('2 * x + y')
-    #    with pytest.raises(InvalidStatement):
-    #        parser.parse_term() TO BEDZIE SUM EXPRESSION, 2*x -> Term 1, y -> term 2
+    def test_nested_parentheses(self):
+        parser = self._get_parser('((3 + 2) * (1 + 1))')
+        result = parser.parse_arth_expression()
+        assert isinstance(result, Term)
+        assert len(result.nodes) == 2
+        assert len(result.nodes[0].nodes) == 2
+        assert len(result.nodes[1].nodes) == 2
     
     @staticmethod
     def _get_parser(string: str) -> Parser:

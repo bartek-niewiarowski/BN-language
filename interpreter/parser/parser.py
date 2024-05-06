@@ -40,6 +40,8 @@ class Parser:
 
     def consume_token(self):
         self.current_token = self.lexer.get_next_token()
+        if self.current_token.type == TokenType.COMMENT:
+            self.consume_token()
     
     def check_token_type(self, types) -> bool:
         if isinstance(types, TokenType):
@@ -68,6 +70,8 @@ class Parser:
             if functions.get(funDef.name):
                 raise RedefintionFuntionError(self.current_token, funDef.name)
             functions[funDef.name] = funDef
+        if not functions:
+            raise(ParsingError(self.current_token, 'InvalidSyntax, there is no possibility to build program.'))
         return Program(position, functions)
     
     # function_definition = "def", function_name, "(", parameters , ")" , statements; 
@@ -136,7 +140,7 @@ class Parser:
         chain.append(element)
         while self.try_consume(TokenType.DOT):
             if not (element := self.parse_id()):
-                raise SyntaxError("There is no variable access or function call after DOT.")
+                raise ParsingError(self.current_token, "There is no variable access or function call after DOT.")
             chain.append(element)
         return chain
 

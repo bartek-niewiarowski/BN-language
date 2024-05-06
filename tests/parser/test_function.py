@@ -84,7 +84,7 @@ class TestParseParameters:
 
     def test_dot_without_following_identifier(self):
         parser = self._get_parser('x.')
-        with pytest.raises(SyntaxError):
+        with pytest.raises(ParsingError):
             parser.parse_chained_expression()
 
     def test_complex_chained_expression(self):
@@ -105,6 +105,9 @@ class TestParseParameters:
         parser = self._get_parser('obj.sum(a+b);')
         result = parser.parse_function_call_or_variable_assignment()
         pass
+        assert isinstance(result, FunctionCall)
+        assert len(result.chained_call) == 1
+        assert len(result.last_call.arguments.arguments) == 1
      
     def test_function_call_with_no_chaining(self):
         parser = self._get_parser('doSomething();')

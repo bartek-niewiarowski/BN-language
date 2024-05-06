@@ -23,6 +23,13 @@ class TestParser:
             assert parser.current_token.type == type
             parser.consume_token()
     
+    def test_consume_token_with_comment(self):
+        parser = self._get_parser('#abc#xda\nx = 10;')
+        types = [TokenType.ID, TokenType.ASSIGN_OPERATOR, TokenType.INT_VALUE, TokenType.SEMICOLON]
+        for type in types:
+            assert parser.current_token.type == type
+            parser.consume_token()
+    
     def test_try_consume(self):
         parser = self._get_parser('x = 10;')
         token = parser.try_consume(TokenType.ID)

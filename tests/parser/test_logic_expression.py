@@ -3,10 +3,6 @@ import pytest
 
 from interpreter.lexer.lexer import Lexer
 from interpreter.source.source import Source
-from interpreter.tokens.token import Token
-from interpreter.tokens.token_type import TokenType
-from interpreter.lexer.error import LexerError
-from interpreter.source.source_position import SourcePosition
 from interpreter.parser.parser import Parser
 from interpreter.parser.syntax_error import *
 from interpreter.parser.syntax_tree import *
@@ -52,6 +48,24 @@ class TestParseLogicExpression:
         result = parser.parse_logic_expression()
         assert hasattr(result, 'left') and hasattr(result.left, 'nodes')
         assert hasattr(result, 'right') and hasattr(result.right, 'value')
+
+    def test_logic_expression_with_not_equal_operator(self):
+        parser = self._get_parser('x != y')
+        result = parser.parse_logic_expression()
+        assert hasattr(result, 'left') and hasattr(result, 'right')
+        assert isinstance(result, NotEqualOperation)
+
+    def test_boolean_values_comparison(self):
+        parser = self._get_parser('true == false')
+        result = parser.parse_logic_expression()
+        assert hasattr(result, 'left') and hasattr(result, 'right')
+        assert isinstance(result, EqualOperation)
+
+    def test_arithmetic_and_logic_combination(self):
+        parser = self._get_parser('sum(x, y) > avg(a, b)')
+        result = parser.parse_logic_expression()
+        assert hasattr(result, 'left') and hasattr(result, 'right')
+        assert isinstance(result.left, FunctionCall) and isinstance(result.right, FunctionCall)
     
     @staticmethod
     def _get_parser(string: str) -> Parser:

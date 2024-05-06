@@ -34,8 +34,30 @@ class TestParseProgram:
 
     def test_empty_program(self):
         parser = self._get_parser('')
+        with pytest.raises(ParsingError):
+            parser.parse_program()
+    
+    def test_function_with_parameters(self):
+        parser = self._get_parser('def funcWithParams(x, y) { return (x + y); }')
         result = parser.parse_program()
-        assert len(result.functions) == 0
+        assert len(result.functions['funcWithParams'].parameters) == 2
+        assert result.functions['funcWithParams'].parameters['x'].name == 'x'
+        assert result.functions['funcWithParams'].parameters['y'].name == 'y'
+        assert len(result.functions['funcWithParams'].statements) == 1
+    
+    def test_function_returning_complex_value(self):
+        parser = self._get_parser('def complexReturn() { return ([1, 2, 3]); }')
+        result = parser.parse_program()
+        assert 'complexReturn' in result.functions
+
+    def test_incorrect_function_syntax(self):
+        parser = self._get_parser('def wrongFunc(x { return x++; }')
+        with pytest.raises(ParsingError):
+            parser.parse_program()
+    
+    def test_function_calling_another(self):
+        parser = self._get_parser('def first() { return (1); } def second() { return (first() + 1); }')
+        result = parser.parse_program()
 
     @staticmethod
     def _get_parser(string: str) -> Parser:

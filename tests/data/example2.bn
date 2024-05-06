@@ -15,3 +15,7 @@ return ( a + b );
 } 
 
 }
+
+def main() {
+    return (0);
+}

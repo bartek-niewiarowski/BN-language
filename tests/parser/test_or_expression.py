@@ -3,10 +3,6 @@ import pytest
 
 from interpreter.lexer.lexer import Lexer
 from interpreter.source.source import Source
-from interpreter.tokens.token import Token
-from interpreter.tokens.token_type import TokenType
-from interpreter.lexer.error import LexerError
-from interpreter.source.source_position import SourcePosition
 from interpreter.parser.parser import Parser
 from interpreter.parser.syntax_error import *
 from interpreter.parser.syntax_tree import *
@@ -36,6 +32,11 @@ class TestParseOrExpression:
         pass
         result = parser.parse_or_expression()
         assert hasattr(result, 'nodes') and len(result.nodes) == 3
+
+    def test_invalid_syntax_or_expression(self):
+        parser = self._get_parser('x > 1 or or y < 2')
+        with pytest.raises(InvalidOrExpression):
+            parser.parse_or_expression()
 
     @staticmethod
     def _get_parser(string: str) -> Parser:

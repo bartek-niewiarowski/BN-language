@@ -65,6 +65,26 @@ class TestParseArthExpression:
         assert result.nodes[0].value == 2
         assert result.nodes[1].nodes[0].final_variable.name == 'x'
         assert result.nodes[1].nodes[1].final_variable.name == 'y'
+
+    def test_mixed_variable_number_expression(self):
+        parser = self._get_parser('x + 5')
+        result = parser.parse_arth_expression()
+        assert len(result.nodes) == 2
+        assert isinstance(result.nodes[0], ObjectExpression)
+        assert isinstance(result.nodes[1], LiteralInt)
+        assert result.nodes[1].value == 5
+
+    def test_negative_numbers(self):
+        parser = self._get_parser('-3 + 5')
+        result = parser.parse_arth_expression()
+        assert isinstance(result.nodes[0], Negation)
+        assert result.nodes[0].node.value == 3
+        assert result.nodes[1].value == 5
+
+    def test_operator_overloading(self):
+        parser = self._get_parser('4 + + 3')
+        with pytest.raises(InvalidArthExpression):
+            parser.parse_arth_expression()
     
     @staticmethod
     def _get_parser(string: str) -> Parser:

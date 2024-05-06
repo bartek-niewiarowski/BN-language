@@ -3,10 +3,6 @@ import pytest
 
 from interpreter.lexer.lexer import Lexer
 from interpreter.source.source import Source
-from interpreter.tokens.token import Token
-from interpreter.tokens.token_type import TokenType
-from interpreter.lexer.error import LexerError
-from interpreter.source.source_position import SourcePosition
 from interpreter.parser.parser import Parser
 from interpreter.parser.syntax_error import *
 from interpreter.parser.syntax_tree import *
@@ -57,6 +53,33 @@ class TestParseFactor:
     def test_empty_input(self):
         parser = self._get_parser('')
         assert parser.parse_factor() is None
+
+    def test_nested_parentheses(self):
+        parser = self._get_parser('((42 + 3) * 2)')
+        result = parser.parse_factor()
+        assert hasattr(result, 'nodes')
+        assert len(result.nodes) == 2
+
+    def test_function_call(self):
+        parser = self._get_parser('myFunction(42)')
+        result = parser.parse_factor()
+        assert result.last_call.function_name == 'myFunction'
+
+    def test_object_expression(self):
+        parser = self._get_parser('myObject.property')
+        result = parser.parse_factor()
+        pass
+        assert result.chained_access[0].name == 'myObject' and result.final_variable.name == 'property'
+
+    def test_complex_negation(self):
+        parser = self._get_parser('-(x + y)')
+        result = parser.parse_factor()
+        assert len(result.node.nodes) == 2
+
+    def test_invalid_nested_syntax(self):
+        parser = self._get_parser('(42 + )')
+        with pytest.raises(InvalidArthExpression):
+            parser.parse_factor()
     
     @staticmethod
     def _get_parser(string: str) -> Parser:
