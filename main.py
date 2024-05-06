@@ -5,8 +5,7 @@ from interpreter.parser.parser import Parser
 
 def main():
     if len(sys.argv) >= 0:
-        #file_path = sys.argv[1]
-        file_path = './tests/data/example2.bn'
+        file_path = sys.argv[1]
         with open(file_path, 'r') as file:
             source = Source(file)
             lexer = Lexer(source)

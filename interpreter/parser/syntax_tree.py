@@ -91,8 +91,8 @@ class IfStatement(Node):
         self.else_statement = else_statement
 
     def __str__(self):
-        if_statements_str = "\n".join(str(stmt) for stmt in self.statements)
-        else_statement_str = "\n".join(str(stmt) for stmt in self.else_statement)
+        if_statements_str = "\n     ".join(str(stmt) for stmt in self.statements)
+        else_statement_str = "\n    ".join(str(stmt) for stmt in self.else_statement)
         return f'If {self.condition}:\n  Then:\n    {if_statements_str}\n  Else:\n    {else_statement_str}'
 
 class WhileStatement(Node):

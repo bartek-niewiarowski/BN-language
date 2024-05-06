@@ -405,7 +405,7 @@ class Parser:
             return Array(position, elements)
 
         first_element = self.parse_or_expression()
-        if first_element is None:
+        if not first_element:
             raise SyntaxError("Expected an expression as an array element at position {}".format(position))
         elements.append(first_element)
 
@@ -414,9 +414,7 @@ class Parser:
             if next_element is None:
                 raise SyntaxError("Expected an expression after ',' in array at position {}".format(position))
             elements.append(next_element)
-
-        if not self.try_consume(TokenType.RIGHT_QUADRATIC_BRACKET):
-            raise SyntaxError("Expected ']' at the end of array at position {}".format(position))
+        self.must_be(TokenType.RIGHT_QUADRATIC_BRACKET)
         
         return Array(position, elements)
     
