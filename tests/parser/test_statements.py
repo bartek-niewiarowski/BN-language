@@ -168,6 +168,15 @@ class TestParseStatements:
         assert hasattr(results[1], 'condition')
         assert hasattr(results[2], 'condition')
         assert hasattr(results[3], 'position')
+    
+    def test_parse_include_stm(self):
+        parser = self._get_parser("from School import Students, Class;\nfrom University import Teacher, Piwo")
+        result = parser.parse_include_statement()
+        pass
+        assert result.library_name == 'School'
+        assert len(result.objects_names) == 2 and result.objects_names[0] == 'Students'
+        
+
 
 
     @staticmethod

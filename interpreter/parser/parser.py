@@ -61,18 +61,30 @@ class Parser:
         token = self.current_token
         self.consume_token()
         return token
-
-    # program = { function_definition }; 
+    
+    # program = { include_statement | function_definition }; 
     def parse_program(self):
         functions = {}
+        includes = []
         position = self.current_token.position
-        while funDef := self.parse_function_definition():
-            if functions.get(funDef.name):
-                raise RedefintionFuntionError(self.current_token, funDef.name)
-            functions[funDef.name] = funDef
-        if not functions:
-            raise(ParsingError(self.current_token, 'InvalidSyntax, there is no possibility to build program.'))
-        return Program(position, functions)
+
+        while True:
+            if self.current_token.type == TokenType.DEF:
+                funDef = self.parse_function_definition()
+                if funDef.name in functions:
+                    raise RedefintionFuntionError(self.current_token, funDef.name)
+                functions[funDef.name] = funDef
+            elif self.current_token.type == TokenType.FROM_NAME:
+                include_statement = self.parse_include_statement()
+                if include_statement:
+                    includes.append(include_statement)
+            else:
+                break
+
+        if not functions and not includes:
+            raise ParsingError(self.current_token, 'Invalid syntax, there is no possibility to build program.')
+
+        return Program(position, functions, includes)
     
     # function_definition = "def", function_name, "(", parameters , ")" , statements; 
     def parse_function_definition(self) -> Optional[FunctionDefintion]:
@@ -93,13 +105,13 @@ class Parser:
         if not self.try_consume(TokenType.FROM_NAME):
             return None
         position = self.current_token.position
-        library_name = self.must_be(TokenType.ID)
+        library_name = self.must_be(TokenType.ID).value
         self.must_be(TokenType.IMPORT_NAME)
         object_names = []
-        object_name = self.must_be(TokenType.ID)
+        object_name = self.must_be(TokenType.ID).value
         object_names.append(object_name)
         while self.try_consume(TokenType.COMMA):
-            object_name = self.must_be(TokenType.ID)
+            object_name = self.must_be(TokenType.ID).value
             object_names.append(object_name)
         self.must_be(TokenType.SEMICOLON)
         return IncludeStatement(position, library_name, object_names)

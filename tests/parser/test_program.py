@@ -26,6 +26,14 @@ class TestParseProgram:
         assert len(result.functions) == 1
         assert 'singleFunc' in result.functions
         assert isinstance(result.functions['singleFunc'], FunctionDefintion)
+    
+    def test_single_function_definition_with_include(self):
+        parser = self._get_parser('from School import Student;\ndef singleFunc() { return (42); }')
+        result = parser.parse_program()
+        assert len(result.functions) == 1
+        assert 'singleFunc' in result.functions
+        assert isinstance(result.functions['singleFunc'], FunctionDefintion)
+        assert len(result.includes) == 1
 
     def test_function_redefinition(self):
         parser = self._get_parser('def dupFunc() { return (1); } def dupFunc() { return (2); }')

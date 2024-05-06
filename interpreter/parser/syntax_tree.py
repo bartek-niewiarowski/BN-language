@@ -9,9 +9,10 @@ class Node:
 
 #program = { function_definition }; 
 class Program(Node):
-    def __init__(self, position, functions) -> None:
+    def __init__(self, position, functions, includes) -> None:
         super().__init__(position)
         self.functions = functions
+        self.includes = includes
     
     def __str__(self):
         function_definitions = '\n'.join(str(self.functions[function]) for function in self.functions)
