@@ -77,3 +77,15 @@ class InvalidFactor(ParsingError):
     def __init__(self, token, message=''):
         message = 'You define invalid factor'
         super().__init__(token, message)
+
+class InvalidVariableAssignment(ParsingError):
+    def __init__(self, token: Token, message=''):
+        super().__init__(token, message)
+
+class InvalidArrayDefinition(ParsingError):
+    def __init__(self, token: Token, message=''):
+        super().__init__(token, message)
+
+class ExpectedBlockStatements(ParsingError):
+    def __init__(self, token: Token, message=''):
+        super().__init__(token, message)

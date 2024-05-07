@@ -61,9 +61,10 @@ class FunctionArguments(Node):
         return f'FunctionArguments: {args}'
 
 class Identifier(Node):
-    def __init__(self, position, name) -> None:
+    def __init__(self, position, name, parent = None) -> None:
         super().__init__(position)
         self.name = name
+        self.parent = parent
     
     def __str__(self):
         return f'Identifier "{self.name}"'
@@ -147,6 +148,34 @@ class ArthExpression(MultiParameterExpression):
 
     def __str__(self):
         return super().__str__()
+
+class SumExpression(MultiParameterExpression):
+    def __init__(self, position, nodes):
+        super().__init__(position, nodes)
+    
+    def __str__(self):
+        return super().__str__()
+
+class SubExpression(MultiParameterExpression):
+    def __init__(self, position, nodes):
+        super().__init__(position, nodes)
+    
+    def __str__(self):
+        return super().__str__()
+
+class MulExpression(MultiParameterExpression):
+    def __init__(self, position, nodes):
+        super().__init__(position, nodes)
+    
+    def __str__(self):
+        return super().__str__()
+
+class DivExpression(MultiParameterExpression):
+    def __init__(self, position, nodes):
+        super().__init__(position, nodes)
+    
+    def __str__(self):
+        return super().__str__()
     
 class Term(MultiParameterExpression):
     def __init__(self, position, nodes):
@@ -214,19 +243,13 @@ class LessEqualOperation(BinaryOperation):
     def __str__(self):
         return super().__str__()
 
-class LiteralTrue(Node):
-    def __init__(self, position: SourcePosition) -> None:
+class LiteralBool(Node):
+    def __init__(self, position: SourcePosition, value) -> None:
         super().__init__(position)
+        self.value = value
 
     def __str__(self):
-        return f'True at {self.position}'
-
-class LiteralFalse(Node):
-    def __init__(self, position: SourcePosition) -> None:
-        super().__init__(position)
-
-    def __str__(self):
-        return f'False at {self.position}'
+        return f'{self.value} at {self.position}'
 
 class LiteralInt(Node):
     def __init__(self, position: SourcePosition, value) -> None:
@@ -261,7 +284,7 @@ class Array(Node):
         items_str = ', '.join(str(item) for item in self.items)
         return f'Array [{items_str}]'
 
-class VariableAssignment(Node):
+class Assignment(Node):
     def __init__(self, position: SourcePosition, target, value):
         super().__init__(position)
         self.target = target
@@ -270,40 +293,17 @@ class VariableAssignment(Node):
     def __str__(self):
         return f'VariableAssignment of {str(self.target)} to {str(self.value)}'
 
-class TypicalFunctionCall(Node):
-    def __init__(self, position: SourcePosition, function_name, arguments) -> None:
+class FunctionCall(Node):
+    def __init__(self, position: SourcePosition, function_name, arguments, parent=None) -> None:
         super().__init__(position)
         self.function_name = function_name
         self.arguments = arguments
+        self.parent = parent
     
     def __str__(self):
         return f'TypicalFunctionCall to {self.function_name} with arguments ({str(self.arguments)})'
 
-class ObjectExpression(Node):
-    def __init__(self, position: SourcePosition, chained_access: List[Union[Identifier, TypicalFunctionCall]], final_variable: Identifier):
+class Statements(Node):
+    def __init__(self, position: SourcePosition, statements) -> None:
         super().__init__(position)
-        self.chained_access = chained_access
-        self.final_variable = final_variable
-
-    def __str__(self):
-        access_str = ". ".join(str(item) for item in self.chained_access)
-        return f'ObjectExpression accessing {access_str} ending at {self.final_variable}'
-
-class FunctionCall(Node):
-    def __init__(self, position: SourcePosition, chained_call: List[Union[Identifier, TypicalFunctionCall]], last_call: TypicalFunctionCall) -> None:
-        super().__init__(position)
-        self.chained_call = chained_call
-        self.last_call = last_call
-
-    def __str__(self):
-        calls_str = ". ".join(str(call) for call in self.chained_call)
-        return f'FunctionCall sequence {calls_str}, ending with {str(self.last_call)}'
-
-LOGIC_OPERATIONS_MAPPING = {
-    TokenType.EQUAL_OPERATOR:                    EqualOperation,
-    TokenType.NOT_EQUAL_OPERATOR:                NotEqualOperation,
-    TokenType.GREATER_THAN_OPERATOR:             GreaterOperation,
-    TokenType.GREATER_OR_EQUAL_THAN_OPERATOR:    GreaterEqualOperation,
-    TokenType.LESS_THAN_OPERATOR:                LessOperation,
-    TokenType.LESS_OR_EQUAL_THAN_OPERATOR:       LessEqualOperation,
-    }
+        self.statements = statements

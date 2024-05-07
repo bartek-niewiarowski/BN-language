@@ -111,11 +111,11 @@ class TestParser:
         assert len(result.items) == 3
 
     def test_valid_function_definition(self):
-        parser = TestParser._get_parser('def myFunction(x, y) { return (x); }')
+        parser = TestParser._get_parser('def myFunction(x, y) { return x; }')
         result = parser.parse_function_definition()
         assert result.name == "myFunction"
         assert len(result.parameters) == 2
-        assert isinstance(result.statements[0], ReturnStatement)
+        assert isinstance(result.statements.statements[0], ReturnStatement)
     
     @staticmethod
     def _get_parser(string: str) -> Parser:

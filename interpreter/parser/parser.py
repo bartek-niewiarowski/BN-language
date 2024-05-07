@@ -11,32 +11,32 @@ class Parser:
         self.current_token = None
         self.consume_token()
 
-        self.LOGIC_OPERATORS = {
-        TokenType.EQUAL_OPERATOR,
-        TokenType.NOT_EQUAL_OPERATOR,
-        TokenType.GREATER_THAN_OPERATOR,
-        TokenType.GREATER_OR_EQUAL_THAN_OPERATOR,
-        TokenType.LESS_THAN_OPERATOR,
-        TokenType.LESS_OR_EQUAL_THAN_OPERATOR
-        }
-
         self.ARTH_OPERATORS = {
-            TokenType.ADD_OPERATOR,
-            TokenType.SUB_OPERATOR
+            TokenType.ADD_OPERATOR: SumExpression,
+            TokenType.SUB_OPERATOR: SubExpression
         }
 
-        self.TERM_OPERATORS = {
-            TokenType.MUL_OPERATOR,
-            TokenType.DIV_OPERATOR
+        self.MUL_OPERATORS = {
+            TokenType.MUL_OPERATOR: MulExpression,
+            TokenType.DIV_OPERATOR: DivExpression
         }
 
         self.BOOLEAN = {
             TokenType.TRUE_VALUE,
             TokenType.FALSE_VALUE
         }
+
+        self.LOGIC_OPERATIONS_MAPPING = {
+            TokenType.EQUAL_OPERATOR:                    EqualOperation,
+            TokenType.NOT_EQUAL_OPERATOR:                NotEqualOperation,
+            TokenType.GREATER_THAN_OPERATOR:             GreaterOperation,
+            TokenType.GREATER_OR_EQUAL_THAN_OPERATOR:    GreaterEqualOperation,
+            TokenType.LESS_THAN_OPERATOR:                LessOperation,
+            TokenType.LESS_OR_EQUAL_THAN_OPERATOR:       LessEqualOperation,
+            }
     
     def raise_exception(self, token_type):
-        raise ExpectedExpressionError(self.current_token, token_type)
+        raise ExpectedExpressionError(self.current_token, token_type) #currentTokenType na tekst?
 
     def consume_token(self):
         self.current_token = self.lexer.get_next_token()
@@ -62,25 +62,23 @@ class Parser:
         self.consume_token()
         return token
     
-    # program = { include_statement | function_definition }; 
+    # program = { include_statement | function_definition };
+    # dodanie do funcrions/includes w funkcji parsujacej te konsytrukcje 
     def parse_program(self):
         functions = {}
         includes = []
         position = self.current_token.position
 
         while True:
-            if self.current_token.type == TokenType.DEF:
-                funDef = self.parse_function_definition()
+            if funDef := self.parse_function_definition():    
                 if funDef.name in functions:
                     raise RedefintionFuntionError(self.current_token, funDef.name)
                 functions[funDef.name] = funDef
-            elif self.current_token.type == TokenType.FROM_NAME:
-                include_statement = self.parse_include_statement()
-                if include_statement:
-                    includes.append(include_statement)
+            elif include_statement := self.parse_include_statement():
+                includes.append(include_statement)
             else:
                 break
-
+        # sprawdzenie czy jest ETX
         if not functions and not includes:
             raise ParsingError(self.current_token, 'Invalid syntax, there is no possibility to build program.')
 
@@ -96,8 +94,8 @@ class Parser:
         params = self.parse_parameters()
         self.must_be(TokenType.RIGHT_BRACKET)
         statements = self.parse_statements()
-        if len(statements) == 0:
-            raise EmptyBlockOfStatements(self.current_token)
+        if not statements:
+            ExpectedBlockStatements(self.current_token, 'Expected block statements in function definition')
         return FunctionDefintion(position, name, params, statements)
 
     # include_statement = "from", library_name, "import", object_name, 	{coma, object_name}, semicolon; 
@@ -124,104 +122,102 @@ class Parser:
         variable_name = self.must_be(TokenType.ID).value
 
         self.must_be(TokenType.LAMBDA_OPERATOR)
-        statements = self.parse_statements()
+        if not (statements := self.parse_statements()):
+            ExpectedBlockStatements(self.current_token, 'Expected block statements after lambda expression')
         return LambdaExpression(position, variable_name, statements)
     
     # function_call = chained_expression, typical_function_call, semicolon;
-    def parse_function_call_or_variable_assignment(self):
-        if chained_expression := self.parse_chained_expression():
-            if isinstance(chained_expression[-1], TypicalFunctionCall):
+    def parse_function_call_or_assignment(self):
+        if expression := self.parse_chained_expression():
+            if isinstance(expression, FunctionCall):
                 self.must_be(TokenType.SEMICOLON)
-                return FunctionCall(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
-            return self.parse_variable_assignment(chained_expression)
+                return expression
+            return self.parse_variable_assignment(expression)
         return None
     
     def parse_function_call_or_object_expression(self):
-        if chained_expression := self.parse_chained_expression():
-            if isinstance(chained_expression[-1], TypicalFunctionCall):
-                return FunctionCall(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
-            elif isinstance(chained_expression[-1], Identifier):
-                return ObjectExpression(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
+        if expression := self.parse_chained_expression():
+            if isinstance(expression, FunctionCall) or isinstance(expression, Identifier):
+                return expression
         return None
     
     # chained_expression = {variable_name | typical_function_call, dot}; 
     def parse_chained_expression(self):
-        chain = []
-        if not (element := self.parse_id()):
+        if not (element := self.parse_id(None)):
             return None
-        chain.append(element)
         while self.try_consume(TokenType.DOT):
-            if not (element := self.parse_id()):
+            if not (element := self.parse_id(element)):
                 raise ParsingError(self.current_token, "There is no variable access or function call after DOT.")
-            chain.append(element)
-        return chain
+        return element
 
-    def parse_id(self):
+    def parse_id(self, parent):
         if not (token := self.try_consume(TokenType.ID)):
             return None
-        if element := self.parse_typical_function_call(token):
+        if element := self.parse_typical_function_call(token, parent):
             return element
         else:
-            return Identifier(token.position, token.value)
+            return Identifier(token.position, token.value, parent) #parent
     
-    def parse_typical_function_call(self, token: Token):
+    def parse_typical_function_call(self, token: Token, parent):
         if not self.try_consume(TokenType.LEFT_BRACKET):
             return None
         arguments = self.parse_arguments()
         self.must_be(TokenType.RIGHT_BRACKET)
-        return TypicalFunctionCall(token.position, token.value, arguments)
+        return FunctionCall(token.position, token.value, arguments, parent) #parent
+    # drzewo dla FunctionCall i Identifier, ktore maja parenta
         
     # parameters = [ variable_name, {comma, variable_name} ]; 
     def parse_parameters(self):
-        params = {}
+        params = []
         if (param := self.parse_parameter()) == None:
             return params
-        params[param.name] = param
+        params.append(param)
         while self.try_consume(TokenType.COMMA):
-            position = self.current_token.position
-            param = self.parse_parameter()
-            pass
-            if param == None:
+            if not (param := self.parse_parameter()):
                 raise InvalidParametersDefintion(self.current_token)
-            elif params.get(param.name):
-                raise TwoParametersWithTheSameName(self.current_token, param) #ale rzucimy zla pozycje, o jeden token za daleko
+            elif param in params:
+                raise TwoParametersWithTheSameName(self.current_token, param)
             else:
-                params[param.name] = param
+                params.append(param)
         return params
 
+    # czy warto obudowywac?
     def parse_parameter(self):
-        position = self.current_token.position
         if param := self.try_consume(TokenType.ID):
-            return Parameter(position, param.value)
+            return param.value
         return None
     
-    # statements = "{", {statement}, "}"; 
+    # statements = "{", {statement}, "}";
+    # obudowanie bloku stms w klase
+    # zmiana aby w przyszlosci dopuscic brak bloku statements,  self.must_be(TokenType.LEFT_CURLY_BRACKET) - try_consume
     def parse_statements(self):
-        self.must_be(TokenType.LEFT_CURLY_BRACKET)
+        if not self.try_consume(TokenType.LEFT_CURLY_BRACKET): 
+            return None
+        position = self.current_token.position
         statements = []
         while stm := self.parse_statement():
             statements.append(stm)
         self.must_be(TokenType.RIGHT_CURLY_BRACKET)
-        return statements
+        if len(statements) == 0:
+            raise EmptyBlockOfStatements(self.current_token)
+        return Statements(position, statements)
         
     def parse_statement(self):
-        stm = \
+        if stm := \
             self.parse_return_statement() \
             or self.parse_if_statement() \
             or self.parse_break_statement() \
             or self.parse_while_statement() \
-            or self.parse_function_call_or_variable_assignment()
-        if stm:
+            or self.parse_function_call_or_assignment():
             return stm
         return None
-
+    
+    # nawiasy do wyrzucenia
     def parse_return_statement(self):
         position = self.current_token.position
         if not self.try_consume(TokenType.RETURN_NAME):
             return None
-        self.must_be(TokenType.LEFT_BRACKET)
         expr = self.parse_or_expression()
-        self.must_be(TokenType.RIGHT_BRACKET)
         self.must_be(TokenType.SEMICOLON)
         return ReturnStatement(position, expr)
 
@@ -234,14 +230,12 @@ class Parser:
         if not (if_condition := self.parse_or_expression()):
             raise EmptyIfCondition(self.current_token)
         self.must_be(TokenType.RIGHT_BRACKET)
-        if_statements = self.parse_statements()
-        if len(if_statements) == 0:
-            raise EmptyBlockOfStatements(self.current_token)
+        if not (if_statements := self.parse_statements()):
+            ExpectedBlockStatements(self.current_token, 'Expected block statements in if statement')
         else_statements = None
         if self.try_consume(TokenType.ELSE_NAME):
-            else_statements = self.parse_statements()
-            if else_statements is not None and len(else_statements) == 0:
-                raise EmptyBlockOfStatements(self.current_token)
+            if not (else_statements := self.parse_statements()):
+                raise ExpectedBlockStatements(self.current_token, 'Expected block statements in else statement')
         return IfStatement(position, if_condition, if_statements, else_statements)
 
     #while = "while", "(", expression, ")", statements; 
@@ -250,11 +244,10 @@ class Parser:
             position = self.current_token.position
             self.must_be(TokenType.LEFT_BRACKET)
             if not (while_condition := self.parse_or_expression()):
-                raise InvalidStatement(self.current_token, "abc")
+                raise InvalidStatement(self.current_token, "Invalid while condition")
             self.must_be(TokenType.RIGHT_BRACKET)
-            while_statements = self.parse_statements()
-            if len(while_statements) == 0:
-                raise EmptyBlockOfStatements(self.current_token)
+            if not (while_statements := self.parse_statements()):
+                ExpectedBlockStatements(self.current_token, 'Expected block statements in while statement')
             return WhileStatement(position, while_condition, while_statements)
         return None
     
@@ -298,70 +291,68 @@ class Parser:
         else:
             return None
 
-    # logic_expression = arth_expression, [relational_operator, arth_expression]; 
+    # logic_expression = arth_expression, [relational_operator, arth_expression];
+    # skorzystac z jednego LOGIC_OPERATORS,  
     def parse_logic_expression(self):
         position = self.current_token.position
         if left := self.parse_arth_expression():
-            if token := self.try_consume(self.LOGIC_OPERATORS):
+            if creator := self.LOGIC_OPERATIONS_MAPPING.get(self.current_token.type):
+                self.consume_token()
                 if right := self.parse_arth_expression():
-                    return LOGIC_OPERATIONS_MAPPING.get(token.type)(position, left, right)
+                    return creator(position, left, right)
                 raise InvalidLogicExpression(self.current_token)
-            return left
-        return None        
+        return left       
     
-    # arth_expression = term, {sum_operator, term}; 
+    # arth_expression = term, {sum_operator, term};
+    # wyrzucic negacje, AddExpression, SubExpression, kolejna mapa 
     def parse_arth_expression(self):
-        position = self.current_token.position
         if left := self.parse_term():
             expressions = [left]
-            while (token := self.try_consume(self.ARTH_OPERATORS)):
+            while creator := self.ARTH_OPERATORS.get(self.current_token.type):
+                self.consume_token()
                 if not (next_expr := self.parse_term()):
                     raise InvalidArthExpression(self.current_token)
-                if token.type == TokenType.SUB_OPERATOR:
-                    next_expr = Negation(token.type, next_expr)
-                expressions.append(next_expr)                   
+                expressions.append(creator(self.current_token.position, next_expr))
             if len(expressions) == 1:
-                return left
-            else:
-                return ArthExpression(position, expressions)
+                return left                   
+            return expressions
         return None
     
     # term = factor, { multiply_operator, factor }; 
     def parse_term(self):
-        position = self.current_token.position
         if left := self.parse_factor():
             expressions = [left]
-            while (token := self.try_consume(self.TERM_OPERATORS)):
+            while creator := self.MUL_OPERATORS.get(self.current_token.type):
+                self.consume_token()
                 if next_expr := self.parse_factor():
-                    if token.type == TokenType.DIV_OPERATOR:
-                        next_expr = Reciprocal(next_expr.position, next_expr)
-                    expressions.append(next_expr)
+                    expressions.append(creator(self.current_token.position, next_expr))
                 else:
-                    raise InvalidTerm(self.current_token)                    
+                    raise InvalidTerm(self.current_token)
             if len(expressions) == 1:
-                return left
-            else:
-                return Term(position, expressions)
+                return left                     
+            return expressions
+        return None
     
-    # factor = {negation_operator}, variable_value | object_expression | function_call | "(", arth_expression, ")"; 
+    # factor = [negation_operator], (literal_value | object_expression | function_call | "(", arth_expression, ")");
+    # modyfikacja do pijedyncznego znaku negacji  
     def parse_factor(self):
         position = self.current_token.position
-        negation_counter = 0
-        while self.try_consume([TokenType.NEGATION_OPERATOR, TokenType.SUB_OPERATOR]):
-            negation_counter += 1
+        is_negation = False
+        if self.try_consume([TokenType.NEGATION_OPERATOR, TokenType.SUB_OPERATOR]):
+            is_negation = True
         factor = \
             self.parse_variable_value() \
-            or self.parse_expression() \
-            or self.parse_function_call_or_object_expression()
+            or self.parse_function_call_or_object_expression() \
+            or self.parse_expression()
         if factor:
-            for _ in range(negation_counter):
+            if is_negation:
                 factor = Negation(position, factor)
             return factor
-        if negation_counter > 0 and not factor:
+        if is_negation and not factor:
             raise InvalidFactor(self.current_token)
         return None
     
-    #variable_value = bool_value | int_value | float_value| string_value | array;
+    #literal_value = bool_value | int_value | float_value| string_value | array;
     def parse_variable_value(self):
         variable_value = \
             self.parse_boolean()    \
@@ -375,17 +366,18 @@ class Parser:
 
     def parse_expression(self):
         if self.try_consume(TokenType.LEFT_BRACKET):
-            operation = self.parse_arth_expression()
+            operation = self.parse_or_expression()
             self.must_be(TokenType.RIGHT_BRACKET)
             return operation
         return None
     
+    # LiteralBool i value
     def parse_boolean(self):
         position = self.current_token.position
         if token := self.try_consume(self.BOOLEAN):
             if token.type == TokenType.TRUE_VALUE:
-                return LiteralTrue(position)
-            return LiteralFalse(position)
+                return LiteralBool(position, True)
+            return LiteralBool(position, False)
         return None
 
     def parse_number(self):
@@ -413,19 +405,14 @@ class Parser:
         position = self.current_token.position
         elements = []
 
-        if self.try_consume(TokenType.RIGHT_QUADRATIC_BRACKET):
-            return Array(position, elements)
+        if first_element := self.parse_or_expression():
+            elements.append(first_element)
 
-        first_element = self.parse_or_expression()
-        if not first_element:
-            raise SyntaxError("Expected an expression as an array element at position {}".format(position))
-        elements.append(first_element)
-
-        while self.try_consume(TokenType.COMMA):
-            next_element = self.parse_or_expression()
-            if next_element is None:
-                raise SyntaxError("Expected an expression after ',' in array at position {}".format(position))
-            elements.append(next_element)
+            while self.try_consume(TokenType.COMMA):
+                if (next_element := self.parse_or_expression()) is None:
+                    raise InvalidArrayDefinition(self.current_token, "Expected an expression after ',' in array")
+                elements.append(next_element)
+        
         self.must_be(TokenType.RIGHT_QUADRATIC_BRACKET)
         
         return Array(position, elements)
@@ -442,21 +429,20 @@ class Parser:
         arguments = []
         if arg := self.parse_or_expression():
             arguments.append(arg)
-        while self.try_consume(TokenType.COMMA):
-            arguments.append(self.parse_or_expression())
+            while self.try_consume(TokenType.COMMA):
+                arguments.append(self.parse_or_expression())
         
         return FunctionArguments(position, arguments)
     
     # variable_assignment = object_expression, assign_operator, assign_expression, semicolon; 
-    def parse_variable_assignment(self, chained_expression):
-        if not isinstance(chained_expression[-1], Identifier):
-            raise SyntaxError()
-        object_expression = ObjectExpression(chained_expression[0].position, chained_expression[0:-1], chained_expression[-1])
+    def parse_variable_assignment(self, expression):
+        if not isinstance(expression, Identifier):
+            raise InvalidVariableAssignment(self.current_token, 'You define invalid variable assignment')
         self.must_be(TokenType.ASSIGN_OPERATOR)
         if not (assign_expr := self.parse_assign_expression()):
-            raise SyntaxError()
+            raise InvalidVariableAssignment(self.current_token, 'You define invalid variable assignment')
         self.must_be(TokenType.SEMICOLON)
-        return VariableAssignment(chained_expression[0].position, object_expression, assign_expr)
+        return Assignment(expression.position, expression, assign_expr) #Assignment
 
     # assign_expression = or_expression
     def parse_assign_expression(self):

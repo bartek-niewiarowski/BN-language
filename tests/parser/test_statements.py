@@ -30,8 +30,9 @@ class TestParseStatements:
     def test_parse_valid_while_statement(self):
         parser = self._get_parser('while (x < 5) { x = x + 1; }')
         result = parser.parse_while_statement()
+        pass
         assert hasattr(result, 'condition') and hasattr(result, 'statements')
-        assert len(result.statements) == 1
+        assert len(result.statements.statements) == 1
 
     def test_while_without_while_keyword(self):
         parser = self._get_parser('(x < 5) { x = x + 1; }')
@@ -63,13 +64,13 @@ class TestParseStatements:
         result = parser.parse_if_statement()
         assert hasattr(result, 'condition') and hasattr(result, 'statements')
         assert result.else_statement is None
-        assert len(result.statements) == 1
+        assert len(result.statements.statements) == 1
 
     def test_valid_if_statement_with_else(self):
         parser = self._get_parser('if (x > 1) { x = x + 1; } else { x = x - 1; }')
         result = parser.parse_if_statement()
         assert hasattr(result, 'condition') and hasattr(result, 'statements')
-        assert hasattr(result, 'else_statement') and len(result.else_statement) == 1
+        assert hasattr(result, 'else_statement') and len(result.else_statement.statements) == 1
 
     def test_if_without_if_keyword(self):
         parser = self._get_parser('(x > 1) { x = x + 1; }')
@@ -102,7 +103,7 @@ class TestParseStatements:
             parser.parse_if_statement()
     
     def test_valid_return_statement(self):
-        parser = self._get_parser('return (x + 1);')
+        parser = self._get_parser('return x + 1;')
         result = parser.parse_return_statement()
         assert hasattr(result, 'statement')  # Checks if expression is parsed
 
@@ -127,7 +128,7 @@ class TestParseStatements:
             parser.parse_return_statement()
     
     def test_parse_valid_return_statement(self):
-        parser = self._get_parser('return (x + 1);')
+        parser = self._get_parser('return x + 1;')
         assert hasattr(parser.parse_statement(), 'statement')
 
     def test_parse_valid_if_statement(self):
@@ -155,7 +156,7 @@ class TestParseStatements:
     def test_parse_multiple_statements(self):
         input_code = """
         {
-            return (x + 1);
+            return x + 1;
             if (x > 1) { x = x - 1; }
             while (x < 10) { x = x + 1; }
             break;
@@ -163,11 +164,11 @@ class TestParseStatements:
         """
         parser = self._get_parser(input_code)
         results = parser.parse_statements()
-        assert len(results) == 4
-        assert hasattr(results[0], 'statement')
-        assert hasattr(results[1], 'condition')
-        assert hasattr(results[2], 'condition')
-        assert hasattr(results[3], 'position')
+        assert len(results.statements) == 4
+        assert hasattr(results.statements[0], 'statement')
+        assert hasattr(results.statements[1], 'condition')
+        assert hasattr(results.statements[2], 'condition')
+        assert hasattr(results.statements[3], 'position')
     
     def test_parse_include_stm(self):
         parser = self._get_parser("from School import Students, Class;\nfrom University import Teacher, Piwo")
