@@ -1,0 +1,14 @@
+def main()
+{
+    A = 5;
+    B = 10;
+    Imie = "Bartek";  
+
+    Nazwisko = "Niewiarowski";
+    Dane = Imie + " " + Nazwisko;
+    print(Dane);
+    C = A + B;
+    result = Fibonacci(5);
+    print(result);
+    return 0;
+}

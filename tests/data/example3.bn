@@ -1,0 +1,15 @@
+def listOperations() {
+    numbers = [1, 2, 3, 4, 5, 6];
+    numbers.append(7);
+    filtredNumbers = numbers.where($num => {num = 0;});
+    numbers.foreach($num =>
+    {
+        if(num/2 == 0) {
+            print(num);
+        }
+        else{
+            print("nie");
+        } 
+    });
+    numbers.sort();
+}
