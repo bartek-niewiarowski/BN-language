@@ -167,7 +167,7 @@ class TestParseParameters:
     
     def test_valid_function_definition(self):
         parser = self._get_parser('def myFunction(x, y) { return x + y; };')
-        result = parser.parse_function_definition()
+        result = parser.parse_function_definition({})
         assert isinstance(result, FunctionDefintion)
         assert result.name == 'myFunction'
         assert len(result.parameters) == 2
@@ -175,18 +175,18 @@ class TestParseParameters:
 
     def test_function_definition_without_def(self):
         parser = self._get_parser('myFunction(x, y) { return (x + y); }')
-        result = parser.parse_function_definition()
+        result = parser.parse_function_definition({})
         assert result is None
 
     def test_missing_parentheses_around_parameters(self):
         parser = self._get_parser('def myFunction x, y { return (x + y); }')
         with pytest.raises(ExpectedExpressionError):
-            parser.parse_function_definition()
+            parser.parse_function_definition({})
 
     def test_empty_statement_block(self):
         parser = self._get_parser('def myFunction(x, y) {};')
         with pytest.raises(EmptyBlockOfStatements):
-            parser.parse_function_definition()
+            parser.parse_function_definition({})
 
     @staticmethod
     def _get_parser(string: str) -> Parser:

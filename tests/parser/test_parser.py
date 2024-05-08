@@ -110,7 +110,7 @@ class TestParser:
 
     def test_valid_function_definition(self):
         parser = TestParser._get_parser('def myFunction(x, y) { return x; }')
-        result = parser.parse_function_definition()
+        result = parser.parse_function_definition({})
         assert result.name == "myFunction"
         assert len(result.parameters) == 2
         assert isinstance(result.statements.statements[0], ReturnStatement)

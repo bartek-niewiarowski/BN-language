@@ -69,37 +69,33 @@ class Parser:
         includes = []
         position = self.current_token.position
 
-        while True:
-            if funDef := self.parse_function_definition():    
-                if funDef.name in functions:
-                    raise RedefintionFuntionError(self.current_token, funDef.name)
-                functions[funDef.name] = funDef
-            elif include_statement := self.parse_include_statement():
-                includes.append(include_statement)
-            else:
-                break
-        # sprawdzenie czy jest ETX
+        while self.parse_function_definition(functions) or self.parse_include_statement(includes):
+            continue
+        if self.current_token.type != TokenType.EOF:
+            raise ParsingError(self.current_token, 'Invalid syntax, after parsing a program there is left')
         if not functions and not includes:
             raise ParsingError(self.current_token, 'Invalid syntax, there is no possibility to build program.')
 
         return Program(position, functions, includes)
     
     # function_definition = "def", function_name, "(", parameters , ")" , statements; 
-    def parse_function_definition(self) -> Optional[FunctionDefintion]:
+    def parse_function_definition(self, functions) -> Optional[FunctionDefintion]:
         if not self.try_consume(TokenType.DEF):
             return None
         position = self.current_token.position
-        name = self.must_be(TokenType.ID).value
+        if functions.get(name := self.must_be(TokenType.ID).value):
+            raise RedefintionFuntionError(self.current_token, name)
         self.must_be(TokenType.LEFT_BRACKET)
         params = self.parse_parameters()
         self.must_be(TokenType.RIGHT_BRACKET)
         statements = self.parse_statements()
         if not statements:
             ExpectedBlockStatements(self.current_token, 'Expected block statements in function definition')
-        return FunctionDefintion(position, name, params, statements)
+        functions[name] = (fun := FunctionDefintion(position, name, params, statements))
+        return fun
 
     # include_statement = "from", library_name, "import", object_name, 	{coma, object_name}, semicolon; 
-    def parse_include_statement(self):
+    def parse_include_statement(self, includes):
         if not self.try_consume(TokenType.FROM_NAME):
             return None
         position = self.current_token.position
@@ -112,7 +108,8 @@ class Parser:
             object_name = self.must_be(TokenType.ID).value
             object_names.append(object_name)
         self.must_be(TokenType.SEMICOLON)
-        return IncludeStatement(position, library_name, object_names)
+        includes.append(inc := IncludeStatement(position, library_name, object_names))
+        return inc
     
     # lambda_expression = "$", variable_name, "=>", statements; 
     def parse_lambda_expression(self):
@@ -141,7 +138,7 @@ class Parser:
                 return expression
         return None
     
-    # chained_expression = {variable_name | typical_function_call, dot}; 
+    # chained_expression = variable_name, ["(", arguments, ")"]{dot, (variable_name | typical_function_call)}; 
     def parse_chained_expression(self):
         if not (element := self.parse_id(None)):
             return None
@@ -439,13 +436,7 @@ class Parser:
         if not isinstance(expression, Identifier):
             raise InvalidVariableAssignment(self.current_token, 'You define invalid variable assignment')
         self.must_be(TokenType.ASSIGN_OPERATOR)
-        if not (assign_expr := self.parse_assign_expression()):
+        if not (assign_expr := self.parse_or_expression()):
             raise InvalidVariableAssignment(self.current_token, 'You define invalid variable assignment')
         self.must_be(TokenType.SEMICOLON)
         return Assignment(expression.position, expression, assign_expr) #Assignment
-
-    # assign_expression = or_expression
-    def parse_assign_expression(self):
-        if or_expression := self.parse_or_expression():
-            return or_expression
-        return None

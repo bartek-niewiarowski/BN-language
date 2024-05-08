@@ -62,6 +62,11 @@ class TestParseProgram:
     def test_function_calling_another(self):
         parser = self._get_parser('def first() { return 1; } def second() { return first() + 1; }')
         result = parser.parse_program()
+    
+    def test_valid_function_definition_with_extra_token(self):
+        parser = TestParseProgram._get_parser('def myFunction(x, y) { return x; } y')
+        with pytest.raises(ParsingError):
+            parser.parse_program()
 
     @staticmethod
     def _get_parser(string: str) -> Parser:
