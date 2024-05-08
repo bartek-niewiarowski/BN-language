@@ -3,10 +3,7 @@ import pytest
 
 from interpreter.lexer.lexer import Lexer
 from interpreter.source.source import Source
-from interpreter.tokens.token import Token
 from interpreter.tokens.token_type import TokenType
-from interpreter.lexer.error import LexerError
-from interpreter.source.source_position import SourcePosition
 from interpreter.parser.parser import Parser
 from interpreter.parser.syntax_error import *
 from interpreter.parser.syntax_tree import *

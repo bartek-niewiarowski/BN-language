@@ -1,5 +1,5 @@
 import sys
-from interpreter.lexer.lexer import Lexer, tokens_generator
+from interpreter.lexer.lexer import Lexer
 from interpreter.source.source import Source
 from interpreter.parser.parser import Parser
 
@@ -10,10 +10,7 @@ def main():
             source = Source(file)
             lexer = Lexer(source)
             parser = Parser(lexer)
-            result = parser.parse_program()
-            print(result)
-            
-
+            parser.parse_program()        
     else:
         print("Proszę uruchomić skrypt z podaniem ścieżki do pliku jako argumentu.")
         print("Przykład:")

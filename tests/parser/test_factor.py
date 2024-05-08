@@ -21,15 +21,15 @@ class TestParseFactor:
     def test_parse_parentheses_expression(self):
         parser = self._get_parser('(42 + 3)')
         result = parser.parse_factor()
-        assert result[0].value == 42
-        assert result[1].nodes.value == 3
+        assert result[0].node.value == 42
+        assert result[1].node.value == 3
 
     def test_parse_parentheses_with_negation(self):
         parser = self._get_parser('-(42 + 3)')
         result = parser.parse_factor()
         assert hasattr(result, 'node')
-        assert result.node[0].value == 42
-        assert result.node[1].nodes.value == 3
+        assert result.node[0].node.value == 42
+        assert result.node[1].node.value == 3
 
     def test_parse_incorrect_syntax(self):
         parser = self._get_parser('42 -')
@@ -70,8 +70,8 @@ class TestParseFactor:
     def test_complex_negation(self):
         parser = self._get_parser('-(x + y)')
         result = parser.parse_factor()
-        assert result.node[0].name == 'x'
-        assert result.node[1].nodes.name == 'y'
+        assert result.node[0].node.name == 'x'
+        assert result.node[1].node.name == 'y'
 
     def test_invalid_nested_syntax(self):
         parser = self._get_parser('(42 + )')

@@ -2,7 +2,7 @@ def fibonacci(x)
 {
 if( x <= 1) {
 
-return (x);
+return x;
 
 }
 
@@ -10,12 +10,12 @@ else {
 
 a = fibonacci(x-1);
 b = fibonacci(x-2);
-return ( a + b );
+return a + b;
 
 } 
 
 }
 
 def main() {
-    return (0);
+    return 0;
 }

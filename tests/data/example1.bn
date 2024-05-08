@@ -10,5 +10,5 @@ def main()
     C = A + B;
     result = Fibonacci(5);
     print(result);
-    return (0);
+    return 0;
 }

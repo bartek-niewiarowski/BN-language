@@ -1,13 +1,9 @@
-from typing import Union, List
-from ..tokens.token_type import TokenType
 from ..source.source_position import SourcePosition
-from ..tokens.token import Token
 
 class Node:
     def __init__(self, position: SourcePosition) -> None:
         self.position = position
 
-#program = { function_definition }; 
 class Program(Node):
     def __init__(self, position, functions, includes) -> None:
         super().__init__(position)
@@ -142,55 +138,41 @@ class Negation(Node):
     def __str__(self):
         return f'Negation of ({self.node}) at {self.position}'
 
-class ArthExpression(MultiParameterExpression):
-    def __init__(self, position, nodes):
-        super().__init__(position, nodes)
-
-    def __str__(self):
-        return super().__str__()
-
-class SumExpression(MultiParameterExpression):
-    def __init__(self, position, nodes):
-        super().__init__(position, nodes)
-    
-    def __str__(self):
-        return super().__str__()
-
-class SubExpression(MultiParameterExpression):
-    def __init__(self, position, nodes):
-        super().__init__(position, nodes)
-    
-    def __str__(self):
-        return super().__str__()
-
-class MulExpression(MultiParameterExpression):
-    def __init__(self, position, nodes):
-        super().__init__(position, nodes)
-    
-    def __str__(self):
-        return super().__str__()
-
-class DivExpression(MultiParameterExpression):
-    def __init__(self, position, nodes):
-        super().__init__(position, nodes)
-    
-    def __str__(self):
-        return super().__str__()
-    
-class Term(MultiParameterExpression):
-    def __init__(self, position, nodes):
-        super().__init__(position, nodes)
-
-    def __str__(self):
-        return super().__str__()
-
-class Reciprocal(Node):
+class ArthExpression(Node):
     def __init__(self, position, node):
         super().__init__(position)
         self.node = node
-        
+
     def __str__(self):
-        return f'Reciprocal of ({self.node}) at {self.position}'
+        return super().__str__()
+
+class SumExpression(ArthExpression):
+    def __init__(self, position, node):
+        super().__init__(position, node)
+    
+    def __str__(self):
+        return super().__str__()
+
+class SubExpression(ArthExpression):
+    def __init__(self, position, node):
+        super().__init__(position, node)
+    
+    def __str__(self):
+        return super().__str__()
+
+class MulExpression(ArthExpression):
+    def __init__(self, position, node):
+        super().__init__(position, node)
+    
+    def __str__(self):
+        return super().__str__()
+
+class DivExpression(ArthExpression):
+    def __init__(self, position, node):
+        super().__init__(position, node)
+    
+    def __str__(self):
+        return super().__str__()
 
 class BinaryOperation(Node):
     def __init__(self, position, left, right):
