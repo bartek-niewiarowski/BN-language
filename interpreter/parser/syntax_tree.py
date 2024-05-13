@@ -1,6 +1,7 @@
 from ..source.source_position import SourcePosition
 from ..interpreter.visitor import Visitor
 from abc import abstractmethod
+import importlib
 
 
 class Node:
@@ -203,59 +204,48 @@ class Negation(Node):
 
 
 class ArthExpression(Node):
-    def __init__(self, position, node):
+    def __init__(self, position, left, right):
         super().__init__(position)
-        self.node = node
+        self.left = left
+        self.right = right
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_arth_expression(self, context)
+        raise NotImplementedError("Must be implemented by subclasses")
 
     def __str__(self):
-        return super().__str__()
+        return f'{self.left} {self.__class__.__name__} {self.right}'
 
 
 class SumExpression(ArthExpression):
-    def __init__(self, position, node):
-        super().__init__(position, node)
+    def __init__(self, position, left, right):
+        super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
         visitor.visit_sum_expression(self, context)
 
-    def __str__(self):
-        return super().__str__()
-
 
 class SubExpression(ArthExpression):
-    def __init__(self, position, node):
-        super().__init__(position, node)
+    def __init__(self, position, left, right):
+        super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
         visitor.visit_sub_expression(self, context)
 
-    def __str__(self):
-        return super().__str__()
-
 
 class MulExpression(ArthExpression):
-    def __init__(self, position, node):
-        super().__init__(position, node)
+    def __init__(self, position, left, right):
+        super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
         visitor.visit_mul_expression(self, context)
 
-    def __str__(self):
-        return super().__str__()
-
 
 class DivExpression(ArthExpression):
-    def __init__(self, position, node):
-        super().__init__(position, node)
+    def __init__(self, position, left, right):
+        super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
         visitor.visit_div_expression(self, context)
-
-    def __str__(self):
-        return super().__str__()
 
 
 class BinaryOperation(Node):

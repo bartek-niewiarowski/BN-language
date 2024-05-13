@@ -1,10 +1,9 @@
-import builtins
-from ..parser.syntax_tree import Program
+from .builtins import built_in_functions
 
 
 class Context:
     def __init__(self):
-        self.functions = builtins.built_in_functions.copy()
+        self.functions = built_in_functions.copy()
         self.variables = {}
         self.includes = {}
 
@@ -36,7 +35,7 @@ class Context:
 
 
 class Interpreter:
-    def __init__(self, program: Program):
+    def __init__(self, program):
         self.program = program
         self.context = Context()
 

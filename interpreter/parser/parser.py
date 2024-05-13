@@ -304,30 +304,24 @@ class Parser:
     # wyrzucic negacje, AddExpression, SubExpression, kolejna mapa 
     def parse_arth_expression(self):
         if left := self.parse_term():
-            expressions = [SumExpression(self.current_token.position, left)]
             while creator := self.ARTH_OPERATORS.get(self.current_token.type):
                 self.consume_token()
                 if not (next_expr := self.parse_term()):
                     raise InvalidArthExpression(self.current_token)
-                expressions.append(creator(self.current_token.position, next_expr))
-            if len(expressions) == 1:
-                return left                   
-            return expressions
+                left = creator(self.current_token.position, left,  next_expr)
+            return left
         return None
     
     # term = factor, { multiply_operator, factor }; 
     def parse_term(self):
         if left := self.parse_factor():
-            expressions = [MulExpression(self.current_token.position, left)]
             while creator := self.MUL_OPERATORS.get(self.current_token.type):
                 self.consume_token()
                 if next_expr := self.parse_factor():
-                    expressions.append(creator(self.current_token.position, next_expr))
+                    left = creator(self.current_token.position, left, next_expr)
                 else:
-                    raise InvalidTerm(self.current_token)
-            if len(expressions) == 1:
-                return left                     
-            return expressions
+                    raise InvalidTerm(self.current_token)              
+            return left
         return None
     
     # factor = [negation_operator], (literal_value | object_expression | function_call | "(", arth_expression, ")");

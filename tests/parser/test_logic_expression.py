@@ -46,6 +46,7 @@ class TestParseLogicExpression:
     def test_complex_arithmetic_expression(self):
         parser = self._get_parser('3 + 4 > 2')
         result = parser.parse_logic_expression()
+        pass
         assert hasattr(result, 'left')
         assert hasattr(result, 'right') and hasattr(result.right, 'value')
 

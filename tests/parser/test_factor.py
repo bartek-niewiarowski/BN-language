@@ -21,15 +21,15 @@ class TestParseFactor:
     def test_parse_parentheses_expression(self):
         parser = self._get_parser('(42 + 3)')
         result = parser.parse_factor()
-        assert result[0].node.value == 42
-        assert result[1].node.value == 3
+        assert result.left.value == 42
+        assert result.right.value == 3
 
     def test_parse_parentheses_with_negation(self):
         parser = self._get_parser('-(42 + 3)')
         result = parser.parse_factor()
         assert hasattr(result, 'node')
-        assert result.node[0].node.value == 42
-        assert result.node[1].node.value == 3
+        assert result.node.left.value == 42
+        assert result.node.right.value == 3
 
     def test_parse_incorrect_syntax(self):
         parser = self._get_parser('42 -')
@@ -54,7 +54,9 @@ class TestParseFactor:
     def test_nested_parentheses(self):
         parser = self._get_parser('((42 + 3) * 2)')
         result = parser.parse_factor()
-        len(result) == 2
+        result.left.left.value == 42
+        result.left.right.value == 3
+        result.right.value == 2
 
     def test_function_call(self):
         parser = self._get_parser('myFunction(42)')
@@ -64,14 +66,13 @@ class TestParseFactor:
     def test_object_expression(self):
         parser = self._get_parser('myObject.property')
         result = parser.parse_factor()
-        pass
         assert result.parent.name == 'myObject' and result.name == 'property'
 
     def test_complex_negation(self):
         parser = self._get_parser('-(x + y)')
         result = parser.parse_factor()
-        assert result.node[0].node.name == 'x'
-        assert result.node[1].node.name == 'y'
+        assert result.node.left.name == 'x'
+        assert result.node.right.name == 'y'
 
     def test_invalid_nested_syntax(self):
         parser = self._get_parser('(42 + )')
