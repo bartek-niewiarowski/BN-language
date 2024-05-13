@@ -38,6 +38,7 @@ class Interpreter:
     def __init__(self, program):
         self.program = program
         self.context = Context()
+        self.context.functions.update(program.functions)
 
-    def execute(self):
-        return self.program.accept(self.context)
+    def execute(self, visitor):
+        return self.program.accept(visitor, self.context)

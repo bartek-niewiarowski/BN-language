@@ -20,7 +20,7 @@ class Program(Node):
         self.includes = includes
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_program(self, context)
+        return visitor.visit_program(self, context)
 
     def __str__(self):
         function_definitions = '\n'.join(str(self.functions[function]) for function in self.functions)
@@ -35,7 +35,7 @@ class FunctionDefintion(Node):
         self.statements = statements
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_function_definition(self, context)
+        return visitor.visit_function_definition(self, context)
 
     def __str__(self):
         parameters_str = ", ".join(str(param) for param in self.parameters)
@@ -50,7 +50,7 @@ class IncludeStatement(Node):
         self.objects_names = objects_names
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_include_statement(self, context)
+        return visitor.visit_include_statement(self, context)
 
     def __str__(self):
         objects_names = ", ".join(str(object.name) for object in self.objects_names)
@@ -63,8 +63,8 @@ class LambdaExpression(Node):
         self.variable_name = variable_name
         self.statements = statements
 
-    def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_lambda_expression(self, context)
+    def accept(self, visitor: Visitor, context):
+        return visitor.visit_lambda_expression(self, context)
 
     def __str__(self):
         statements = "\n ".join(str(stmt) for stmt in self.statements)
@@ -88,7 +88,7 @@ class Identifier(Node):
         self.parent = parent
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_identfier(self, context)
+        return visitor.visit_identifier(self, context)
 
     def __str__(self):
         return f'Identifier "{self.name}"'
@@ -100,7 +100,7 @@ class Parameter(Node):
         self.name = name
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_parameter(self, context)
+        return visitor.visit_parameter(self, context)
 
     def __str__(self):
         return f'Parameter "{self.name}"'
@@ -112,7 +112,7 @@ class ReturnStatement(Node):
         self.statement = statement
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_return_statement(self, context)
+        return visitor.visit_return_statement(self, context)
 
     def __str__(self):
         return f'ReturnStatement: {str(self.statement)}'
@@ -126,7 +126,7 @@ class IfStatement(Node):
         self.else_statement = else_statement
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_if_statement(self, context)
+        return visitor.visit_if_statement(self, context)
 
     def __str__(self):
         if_statements_str = "\n     ".join(str(stmt) for stmt in self.statements)
@@ -141,7 +141,7 @@ class WhileStatement(Node):
         self.statements = statements
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_while_statement(self, context)
+        return visitor.visit_while_statement(self, context)
 
     def __str__(self):
         stmts_str = "\n".join(str(stmt) for stmt in self.statements)
@@ -153,7 +153,7 @@ class BreakStatement(Node):
         return f'BreakStatement at {self.position}'
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_break_statement(self, context)
+        return visitor.visit_break_statement(self, context)
 
 
 class MultiParameterExpression(Node):
@@ -162,7 +162,7 @@ class MultiParameterExpression(Node):
         self.nodes = nodes
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_multi_parametr_expression(self, context)
+        raise NotImplementedError("Must be implemented by subclasses")
 
     def __str__(self):
         nodes_str = ', '.join(str(node) for node in self.nodes)
@@ -174,7 +174,7 @@ class OrExpression(MultiParameterExpression):
         super().__init__(position, nodes)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_or_expression(self, context)
+        return visitor.visit_or_expression(self, context)
 
     def __str__(self):
         return super().__str__()
@@ -185,7 +185,7 @@ class AndExpression(MultiParameterExpression):
         super().__init__(position, nodes)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_and_expression(self, context)
+        return visitor.visit_and_expression(self, context)
 
     def __str__(self):
         return super().__str__()
@@ -197,7 +197,7 @@ class Negation(Node):
         self.node = node
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_negation(self, context)
+        return visitor.visit_negation(self, context)
 
     def __str__(self):
         return f'Negation of ({self.node}) at {self.position}'
@@ -221,7 +221,7 @@ class SumExpression(ArthExpression):
         super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_sum_expression(self, context)
+        return visitor.visit_sum_expression(self, context)
 
 
 class SubExpression(ArthExpression):
@@ -229,7 +229,7 @@ class SubExpression(ArthExpression):
         super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_sub_expression(self, context)
+        return visitor.visit_sub_expression(self, context)
 
 
 class MulExpression(ArthExpression):
@@ -237,7 +237,7 @@ class MulExpression(ArthExpression):
         super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_mul_expression(self, context)
+        return visitor.visit_mul_expression(self, context)
 
 
 class DivExpression(ArthExpression):
@@ -245,7 +245,7 @@ class DivExpression(ArthExpression):
         super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_div_expression(self, context)
+        return visitor.visit_div_expression(self, context)
 
 
 class BinaryOperation(Node):
@@ -255,7 +255,7 @@ class BinaryOperation(Node):
         self.right = right
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_binary_operation(self, context)
+        raise NotImplementedError("Must be implemented by subclasses")
 
     def __str__(self):
         return f'{str(self.left)} {self.__class__.__name__} {str(self.right)}'
@@ -266,7 +266,7 @@ class EqualOperation(BinaryOperation):
         super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_equal_operation(self, context)
+        return visitor.visit_equal_operation(self, context)
 
     def __str__(self):
         return super().__str__()
@@ -277,7 +277,7 @@ class NotEqualOperation(BinaryOperation):
         super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_not_equal_operation(self, context)
+        return visitor.visit_not_equal_operation(self, context)
 
     def __str__(self):
         return super().__str__()
@@ -288,7 +288,7 @@ class GreaterOperation(BinaryOperation):
         super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_greater_operation(self, context)
+        return visitor.visit_greater_operation(self, context)
 
     def __str__(self):
         return super().__str__()
@@ -299,7 +299,7 @@ class GreaterEqualOperation(BinaryOperation):
         super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_greater_equal_operation(self, context)
+        return visitor.visit_greater_equal_operation(self, context)
 
     def __str__(self):
         return super().__str__()
@@ -310,7 +310,7 @@ class LessOperation(BinaryOperation):
         super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_less_operation(self, context)
+        return visitor.visit_less_operation(self, context)
 
     def __str__(self):
         return super().__str__()
@@ -321,7 +321,7 @@ class LessEqualOperation(BinaryOperation):
         super().__init__(position, left, right)
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_less_equal_operation(self, context)
+        return visitor.visit_less_equal_operation(self, context)
 
     def __str__(self):
         return super().__str__()
@@ -333,7 +333,7 @@ class LiteralBool(Node):
         self.value = value
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_literal_bool(self, context)
+        return visitor.visit_literal_bool(self, context)
 
     def __str__(self):
         return f'{self.value} at {self.position}'
@@ -344,8 +344,8 @@ class LiteralInt(Node):
         super().__init__(position)
         self.value = value
 
-    def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_literal_int(self, context)
+    def accept(self, visitor: Visitor, context):
+        return visitor.visit_literal_int(self, context)
 
     def __str__(self):
         return f'Integer value {self.value}'
@@ -357,7 +357,7 @@ class LiteralFloat(Node):
         self.value = value
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_literal_float(self, context)
+        return visitor.visit_literal_float(self, context)
 
     def __str__(self):
         return f'Float value {self.value}'
@@ -369,7 +369,7 @@ class LiteralString(Node):
         self.value = value
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_literal_string(self, context)
+        return visitor.visit_literal_string(self, context)
 
     def __str__(self):
         return f'String value "{self.value}"'
@@ -381,7 +381,7 @@ class Array(Node):
         self.items = items
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_array(self, context)
+        return visitor.visit_array(self, context)
 
     def __str__(self):
         items_str = ', '.join(str(item) for item in self.items)
@@ -395,7 +395,7 @@ class Assignment(Node):
         self.value = value
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_assignment(self, context)
+        return visitor.visit_assignment(self, context)
 
     def __str__(self):
         return f'VariableAssignment of {str(self.target)} to {str(self.value)}'
@@ -409,7 +409,7 @@ class FunctionCall(Node):
         self.parent = parent
 
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_function_call(self, context)
+        return visitor.visit_function_call(self, context)
 
     def __str__(self):
         return f'TypicalFunctionCall to {self.function_name} with arguments ({str(self.arguments)})'
