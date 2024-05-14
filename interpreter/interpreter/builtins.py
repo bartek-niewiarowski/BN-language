@@ -15,9 +15,35 @@ def to_float(x):
         return x.astype(float)
     return float(x)
 
-built_in_functions = {'print': print,
-                      'scan': input,
-                      'to_bool': to_bool,
-                      'to_int': to_int,
-                      'to_float': to_float,
-                      }
+def append(lst, value):
+    lst.append(value)
+
+def remove(lst, index):
+    if 0 <= index < len(lst):
+        lst.pop(index)
+    else:
+        raise IndexError("Index out of range")
+
+def sort(lst):
+    if all(isinstance(i, (int, float)) for i in lst):
+        lst.sort()
+    else:
+        raise ValueError("List contains non-numeric elements")
+
+def get(lst, index):
+    if 0 <= index < len(lst):
+        return lst[index]
+    else:
+        raise IndexError("Index out of range")
+
+built_in_functions = {
+    'print': print,
+    'scan': input,
+    'to_bool': to_bool,
+    'to_int': to_int,
+    'to_float': to_float,
+    'append': append,
+    'remove': remove,
+    'sort': sort,
+    'get': get
+}
