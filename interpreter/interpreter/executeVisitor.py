@@ -7,9 +7,17 @@ import numbers
 
 class ExecuteVisitor(Visitor):
     def visit_program(self, element: Program, context: Context):
+        for function in element.functions:
+            function = element.functions.get(function)
+            function.accept(self, context)
+        for include in element.includes:
+            include.accept(self, context)
+        
         if 'main' not in context.functions:
             raise Exception()
-        ret_code = context.functions['main'].accept(self, context)
+        main_call = FunctionCall(SourcePosition(1, 1), 'main', FunctionArguments(SourcePosition(1, 1), []), None)
+        ret_code = main_call.accept(self, context)
+        #ret_code = context.functions['main'].accept(self, context)
         if ret_code is None:
             ret_code = 0
         return ret_code
@@ -187,24 +195,36 @@ class ExecuteVisitor(Visitor):
     def visit_function_call(self, element: FunctionCall, context: Context):
         if element.parent is not None:
             parent_value = element.parent.accept(self, context)
-            function = getattr(parent_value, element.function_name)
+            
+            if isinstance(parent_value, list):
+                function = context.functions.get(element.function_name)
+                if not function:
+                    raise FunctionDoesNotExist(element.function_name)
+            else:
+                function = getattr(parent_value, element.function_name, None)
+                if function is None:
+                    raise FunctionDoesNotExist(element.function_name)
         else:
             function = context.get_function(element.function_name)
+            if function is None:
+                raise FunctionDoesNotExist(element.function_name)
         
-        if function is None:
-            raise FunctionDoesNotExist(element.function_name)
-        
-        args = [arg.accept(self, context) for arg in element.arguments]
+        args = [arg.accept(self, context) for arg in element.arguments.arguments]
+
         if isinstance(function, FunctionDefintion):
             function_context = context.new_context()
             for arg, param in zip(args, function.parameters):
                 function_context.add_variable(param.name, arg)
             return function.statements.accept(self, function_context)
         else:
-            return function(*args)
+            if element.parent is not None and isinstance(parent_value, list):
+                return function(parent_value, *args)
+            else:
+                return function(*args)
+
 
     def visit_statements(self, element: Statements, context):
-        for statement in element.statements:
-            ret = statement.accept(self, context)
-            if ret:
-                return ret
+            for statement in element.statements:
+                ret = statement.accept(self, context)
+                if ret:
+                    return ret
