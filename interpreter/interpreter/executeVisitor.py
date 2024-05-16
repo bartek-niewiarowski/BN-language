@@ -3,6 +3,7 @@ from .interpreter import Context
 from .interpreter_error import *
 import numpy as np
 import numbers
+import sys, os
 
 
 class ExecuteVisitor(Visitor):
@@ -27,6 +28,9 @@ class ExecuteVisitor(Visitor):
 
     def visit_include_statement(self, element: IncludeStatement, context: Context):
         library_name = element.library_name
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+        if project_root not in sys.path:
+            sys.path.insert(0, project_root)
         
         try:
             module = importlib.import_module(library_name)
@@ -124,24 +128,60 @@ class ExecuteVisitor(Visitor):
     def visit_sum_expression(self, element: SumExpression, context:Context):
         left_value = element.left.accept(self, context)
         right_value = element.right.accept(self, context)
-        return left_value + right_value
+        return self.check_sum_types(left_value, right_value)
+    
+    def check_sum_types(self, left_value, right_value): 
+        if isinstance(left_value, (int, float)) and isinstance(right_value, (int, float)):
+            return float(left_value) + float(right_value)
+        
+        elif isinstance(left_value, (int, float)) and isinstance(right_value, str):
+            return str(left_value) + str(right_value)
+        elif isinstance(left_value, str) and isinstance(right_value, (int, float)):
+            return left_value + str(right_value)
+        
+        elif type(left_value) == type(right_value):
+            return left_value + right_value
+    
+        else:
+            raise TypeError(f"Unsupported operand types for +: '{type(left_value).__name__}' and '{type(right_value).__name__}'")
 
     def visit_sub_expression(self, element: SubExpression, context: Context):
         left_value = element.left.accept(self, context)
         right_value = element.right.accept(self, context)
-        return left_value - right_value
+        return self.check_sub_types(left_value, right_value)
+    
+    def check_sub_types(self, left_value, right_value):
+        if isinstance(left_value, (float, int)) and isinstance(right_value, (float, int))\
+            or (isinstance(left_value, bool) and isinstance(right_value, bool)):
+                return left_value - right_value
+        else:
+            raise TypeError(f"Unsupported operand types for -: '{type(left_value).__name__}' and '{type(right_value).__name__}'")
 
     def visit_mul_expression(self, element: MulExpression, context: Context):
         left_value = element.left.accept(self, context)
         right_value = element.right.accept(self, context)
-        return left_value * right_value
+        return self.check_mul_types(left_value, right_value)
+    
+    def check_mul_types(self, left_value, right_value):
+        if isinstance(left_value, (float, int)) and isinstance(right_value, (float, int))\
+            or (isinstance(left_value, int) and isinstance(right_value, str))\
+            or (isinstance(left_value, str) and isinstance(right_value, int)):
+                return left_value * right_value
+        else:
+            raise TypeError(f"Unsupported operand types for *: '{type(left_value).__name__}' and '{type(right_value).__name__}'")
 
     def visit_div_expression(self, element: DivExpression, context: Context):
         left_value = element.left.accept(self, context)
         right_value = element.right.accept(self, context)
         if right_value == 0:
             raise ZeroDivisionError("Division by zero is not allowed")
-        return left_value / right_value
+        return self.check_div_types(left_value, right_value)
+    
+    def check_div_types(self, left_value, right_value):
+        if isinstance(left_value, (float, int)) and isinstance(right_value, (float, int)):
+            return left_value / right_value
+        else:
+            raise TypeError(f"Unsupported operand types for *: '{type(left_value).__name__}' and '{type(right_value).__name__}'")
 
     def visit_equal_operation(self, element: EqualOperation, context: Context) :
         return element.left.accept(self, context) == element.right.accept(self, context)

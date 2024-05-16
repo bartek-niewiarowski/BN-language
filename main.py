@@ -2,6 +2,8 @@ import sys
 from interpreter.lexer.lexer import Lexer
 from interpreter.source.source import Source
 from interpreter.parser.parser import Parser
+from interpreter.interpreter.executeVisitor import ExecuteVisitor
+from interpreter.interpreter.interpreter import Context
 
 def main():
     if len(sys.argv) >= 0:
@@ -10,7 +12,10 @@ def main():
             source = Source(file)
             lexer = Lexer(source)
             parser = Parser(lexer)
-            parser.parse_program()        
+            visitor = ExecuteVisitor()
+            a = visitor.visit_program(parser.parse_program(), Context())
+            print(a)
+
     else:
         print("Proszę uruchomić skrypt z podaniem ścieżki do pliku jako argumentu.")
         print("Przykład:")

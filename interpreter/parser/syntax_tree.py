@@ -421,4 +421,4 @@ class Statements(Node):
         self.statements = statements
     
     def accept(self, visitor: Visitor, context) -> None:
-        visitor.visit_statements(self, context)
+        return visitor.visit_statements(self, context)
