@@ -1,9 +1,10 @@
-from .builtins import built_in_functions
+from .builtins import built_in_functions, lambda_functions
 
 
 class Context:
     def __init__(self):
         self.functions = built_in_functions.copy()
+        self.lambda_funtions = lambda_functions.copy()
         self.variables = {}
         self.includes = {}
 
@@ -31,6 +32,7 @@ class Context:
     def new_context(self):
         new_context = Context()
         new_context.functions = self.functions
+        new_context.includes = self.includes
         return new_context
 
 

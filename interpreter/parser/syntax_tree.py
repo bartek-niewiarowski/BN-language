@@ -192,9 +192,10 @@ class AndExpression(MultiParameterExpression):
 
 
 class Negation(Node):
-    def __init__(self, position, node):
+    def __init__(self, position, node, negation_type):
         super().__init__(position)
         self.node = node
+        self.negation_type = negation_type
 
     def accept(self, visitor: Visitor, context) -> None:
         return visitor.visit_negation(self, context)

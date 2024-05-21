@@ -36,6 +36,23 @@ def get(lst, index):
     else:
         raise IndexError("Index out of range")
 
+def where(lst, statements, visitator, context, name):
+    result = []
+    for item in lst:
+        context.add_variable(name, item)
+        if statements.accept(visitator, context):
+            result.append(item)
+    return result
+
+def foreach(lst, statements, visitator, context, name):
+    items = []
+    for item in lst:
+        context.add_variable(name, item)
+        #item = statements.accept(visitator, context)
+        statements.accept(visitator, context)
+        items.append(context.variables.get(name))
+    return items
+
 built_in_functions = {
     'print': print,
     'scan': input,
@@ -45,5 +62,9 @@ built_in_functions = {
     'append': append,
     'remove': remove,
     'sort': sort,
-    'get': get
+    'get': get,
+    'where': where,
+    'foreach': foreach
 }
+
+lambda_functions = ['where', 'foreach']

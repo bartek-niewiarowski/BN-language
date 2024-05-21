@@ -18,7 +18,6 @@ class ExecuteVisitor(Visitor):
             raise Exception()
         main_call = FunctionCall(SourcePosition(1, 1), 'main', FunctionArguments(SourcePosition(1, 1), []), None)
         ret_code = main_call.accept(self, context)
-        #ret_code = context.functions['main'].accept(self, context)
         if ret_code is None:
             ret_code = 0
         return ret_code
@@ -43,8 +42,9 @@ class ExecuteVisitor(Visitor):
         except ImportError as e:
             raise ImportError(f"Nie można zaimportować: {str(e)}")
 
-    def visit_lambda_expression(self, element, context: Context):
-        pass
+    def visit_lambda_expression(self, element: LambdaExpression, context: Context):
+        context.add_variable(element.variable_name, None)
+        return element.variable_name
 
     def visit_function_arguments(self, element, context: Context):
         args = [arg.accept(self, context) for arg in element.arguments]
@@ -53,7 +53,6 @@ class ExecuteVisitor(Visitor):
     def visit_identifier(self, element: Identifier, context: Context):
         if element.parent is not None:
             parent_value = element.parent.accept(self, context)
-            # Przyjmując, że `parent_value` jest słownikiem lub posiada atrybuty.
             return getattr(parent_value, element.name)
         else:
             return context.get_variable(element.name)
@@ -122,26 +121,34 @@ class ExecuteVisitor(Visitor):
                 x = bool(x) and bool(term)
         return x
     
-    def visit_negation(self, element, context) :
-        pass
+    def visit_negation(self, element: Negation, context: Context) :
+        if element.negation_type == 'Logic':
+            try:
+                return not element.node.accept(self, context)
+            except TypeError:
+                raise TypeError()
+        elif element.negation_type == 'Arth':
+            try:
+                return - element.node.accept(self, context)
+            except TypeError:
+                raise TypeError()
 
     def visit_sum_expression(self, element: SumExpression, context:Context):
         left_value = element.left.accept(self, context)
         right_value = element.right.accept(self, context)
         return self.check_sum_types(left_value, right_value)
     
-    def check_sum_types(self, left_value, right_value): 
+    def check_sum_types(self, left_value, right_value):
+        if isinstance(left_value, int) and isinstance(right_value, int):
+            return left_value + right_value
         if isinstance(left_value, (int, float)) and isinstance(right_value, (int, float)):
             return float(left_value) + float(right_value)
-        
         elif isinstance(left_value, (int, float)) and isinstance(right_value, str):
             return str(left_value) + str(right_value)
         elif isinstance(left_value, str) and isinstance(right_value, (int, float)):
             return left_value + str(right_value)
-        
         elif type(left_value) == type(right_value):
             return left_value + right_value
-    
         else:
             raise TypeError(f"Unsupported operand types for +: '{type(left_value).__name__}' and '{type(right_value).__name__}'")
 
@@ -245,11 +252,14 @@ class ExecuteVisitor(Visitor):
                 if function is None:
                     raise FunctionDoesNotExist(element.function_name)
         else:
-            function = context.get_function(element.function_name)
+            function = context.get_function(element.function_name) or self.get_class_method(element, context) or self.get_constructor(element, context)
             if function is None:
                 raise FunctionDoesNotExist(element.function_name)
         
-        args = [arg.accept(self, context) for arg in element.arguments.arguments]
+        if hasattr(element.arguments, "arguments"):
+            args = [arg.accept(self, context) for arg in element.arguments.arguments]
+        elif hasattr(element.arguments, "variable_name"):
+            args = element.arguments.accept(self, context)
 
         if isinstance(function, FunctionDefintion):
             function_context = context.new_context()
@@ -258,10 +268,23 @@ class ExecuteVisitor(Visitor):
             return function.statements.accept(self, function_context)
         else:
             if element.parent is not None and isinstance(parent_value, list):
+                if element.function_name in context.lambda_funtions:
+                    return function(parent_value, element.arguments.statements, self, context, args)
                 return function(parent_value, *args)
             else:
                 return function(*args)
-
+    
+    def get_class_method(self, element, context):
+        for obj in context.includes.values():
+            if function := getattr(obj, element.function_name, None):
+                return function
+        return None
+    
+    def get_constructor(self, element, context):       
+        for class_name, cls in context.includes.items():
+            if class_name == element.function_name:
+                return cls
+        return None
 
     def visit_statements(self, element: Statements, context):
             for statement in element.statements:

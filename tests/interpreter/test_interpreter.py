@@ -163,6 +163,62 @@ class TestInterpreter:
             result = parser.parse_logic_expression()
             results.append(visitor.visit_equal_operation(result, context))
         assert results == [True, True, False, True, False, True, False]
+
+    def test_comparison_not_equal(self):
+        expressions = ["1 != 2", "1.5 != 2.5", "2 != 1", "2 != 2", "true != true", 
+                       "true != false", "[1] != [1]", "[1] != [2]", '"a" != "b"']
+        results = []
+        context = Context()
+        visitor = ExecuteVisitor()
+        for expression in expressions:
+            parser = self._get_parser(expression)
+            result = parser.parse_logic_expression()
+            results.append(visitor.visit_not_equal_operation(result, context))
+        assert results == [True, True, True, False, False, True, False, True, True]
+
+    def test_comparison_greater(self):
+        expressions = ["1 > 2", "1.5 > 2.5", "2 > 1", "2 > 2", "true > true", '"a" > "b"']
+        results = []
+        context = Context()
+        visitor = ExecuteVisitor()
+        for expression in expressions:
+            parser = self._get_parser(expression)
+            result = parser.parse_logic_expression()
+            results.append(visitor.visit_greater_operation(result, context))
+        assert results == [False, False, True, False, False, False]
+
+    def test_comparison_greater_equal(self):
+        expressions = ["1 >= 2", "1.5 >= 2.5", "2 >= 1", "2 >= 2", "true >= true", '"a" >= "b"']
+        results = []
+        context = Context()
+        visitor = ExecuteVisitor()
+        for expression in expressions:
+            parser = self._get_parser(expression)
+            result = parser.parse_logic_expression()
+            results.append(visitor.visit_greater_equal_operation(result, context))
+        assert results == [False, False, True, True, True, False]
+
+    def test_comparison_less(self):
+        expressions = ["1 < 2", "1.5 < 2.5", "2 < 1", "2 < 2", "true < true", '"a" < "b"']
+        results = []
+        context = Context()
+        visitor = ExecuteVisitor()
+        for expression in expressions:
+            parser = self._get_parser(expression)
+            result = parser.parse_logic_expression()
+            results.append(visitor.visit_less_operation(result, context))
+        assert results == [True, True, False, False, False, True]
+
+    def test_comparison_less_equal(self):
+        expressions = ["1 <= 2", "1.5 <= 2.5", "2 <= 1", "2 <= 2", "true <= true", '"a" <= "b"']
+        results = []
+        context = Context()
+        visitor = ExecuteVisitor()
+        for expression in expressions:
+            parser = self._get_parser(expression)
+            result = parser.parse_logic_expression()
+            results.append(visitor.visit_less_equal_operation(result, context))
+        assert results == [True, True, False, True, True, True]        
     
     def test_program(self):
         parser = self._get_parser('def main() {x=5;\nreturn x;}\n')
@@ -172,11 +228,36 @@ class TestInterpreter:
         assert a == 5
     
     def test_includes(self):
-        parser = self._get_parser('from student import Student; def main() {s = Student(1, 10);\n return s.age;}\n')
+        parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); return [s.name, s.age];}')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
-        a = visitor.visit_program(result, Context())
-        assert a == 5
+        context = Context()
+        ret = visitor.visit_program(result, context)
+        assert ret == ["Adam", 22]
+    
+    def test_include_assignment(self):
+        parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); b = s.age; return b;}')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        context = Context()
+        ret = visitor.visit_program(result, context)
+        assert ret == 22
+
+    def test_include_change_field_value(self):
+        parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); s.age = 23; return s.age;}')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        context = Context()
+        ret = visitor.visit_program(result, context)
+        assert ret == 23
+
+    def test_include_call_method(self):
+        parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); return s.greet();}')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        context = Context()
+        ret = visitor.visit_program(result, context)
+        assert ret == "Hello, my name is Adam and I am 22 years old."
 
     def test_array_append(self):
         parser = self._get_parser('def main() {lst = [1, 2, 3];\n lst.append(4);\n return lst;}\n')
@@ -198,6 +279,86 @@ class TestInterpreter:
         visitor = ExecuteVisitor()
         ret = visitor.visit_program(result, Context())
         assert ret == 1
+    
+    def test_while(self):
+        parser = self._get_parser('def main() {a = 0; while(a <= 5) {a = a + 1;} return a;}')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, Context())
+        assert ret == 6
+    
+    def test_if(self):
+        parser = self._get_parser('def main() {a = 5; if(a >= 0) {return a;} else {return 1;}}')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, Context())
+        assert ret == 5
+    
+    def test_if_else(self):
+        parser = self._get_parser('def main() {a = 5; if(a >= 6) {return a;} else {return 1;}}')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, Context())
+        assert ret == 1
+    
+    def test_lambda_foreach(self):
+        parser = self._get_parser('def main() {a = [1, 2, 3]; b = a.foreach($x => { x = x + 1; }); return b;}')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, Context())
+        assert ret == [2, 3, 4]
+    
+    def test_lambda_foreach_many_stms(self):
+        parser = self._get_parser('def main() {a = [1, 2, 3]; b = a.foreach($x => { y = x + 1; y = y * y; x = y; }); return b;}')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, Context())
+        assert ret == [4, 9, 16]
+
+    # do konsultacji
+    def test_lambda_where(self):
+        parser = self._get_parser('def main() {a = [1, 2, 3]; b = a.where($x => { (x > 1) }); return b;}')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, Context())
+        assert ret == [2, 3]
+    
+    def test_negation_arth(self):
+        parser = self._get_parser('def main() {a = 42; return -a;}')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, Context())
+        assert ret == -42
+    
+    def test_negation_logic(self):
+        programs = [
+            'def main() {a = "42"; return !a;}',
+            'def main() {a = [42, 43, 35]; return !a;}',
+            'from student import Student; def main() {a = Student(1, 2); return !a;}',
+            'def main() {a = true; return !a;}',
+            'def main() {a = false; return !a;}'
+        ]
+        returns = []
+        for program in programs:
+            parser = self._get_parser(program)
+            result = parser.parse_program()
+            visitor = ExecuteVisitor()
+            ret = visitor.visit_program(result, Context())
+            returns.append(ret)
+        assert returns == [False, False, False, False, True]
+    
+    def test_negation_arth_throw_error(self):
+        programs = [
+            'def main() {a = "42"; return -a;}',
+            'def main() {a = [42, 43, 35]; return -a;}',
+            'from student import Student; def main() {a = Student(1, 2); return -a;}'
+        ]
+        for program in programs:
+            parser = self._get_parser(program)
+            result = parser.parse_program()
+            visitor = ExecuteVisitor()
+            with pytest.raises(TypeError):
+                visitor.visit_program(result, Context())
 
     @staticmethod
     def _get_parser(string: str) -> Parser:

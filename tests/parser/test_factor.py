@@ -16,7 +16,7 @@ class TestParseFactor:
     def test_parse_negated_number(self):
         parser = self._get_parser('-42')
         result = parser.parse_factor()
-        assert hasattr(result, 'node') and hasattr(result.node, 'value') and result.node.value == 42
+        assert hasattr(result, 'node') and hasattr(result.node, 'value') and result.node.value == 42 and result.negation_type == 'Arth'
 
     def test_parse_parentheses_expression(self):
         parser = self._get_parser('(42 + 3)')
