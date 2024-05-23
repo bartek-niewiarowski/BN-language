@@ -75,6 +75,9 @@ class FunctionArguments(Node):
     def __init__(self, position: SourcePosition, arguments) -> None:
         super().__init__(position)
         self.arguments = arguments
+    
+    def accept(self, visitor: Visitor, context):
+        return visitor.visit_function_arguments(self, context)
 
     def __str__(self):
         args = ", ".join(str(object) for object in self.arguments)
