@@ -3,6 +3,7 @@ from interpreter.lexer.lexer import Lexer
 from interpreter.source.source import Source
 from interpreter.parser.parser import Parser
 from interpreter.interpreter.executeVisitor import ExecuteVisitor
+from interpreter.interpreter.printerVisitor import PrintVisitor
 from interpreter.interpreter.interpreter import Context
 
 def main():
@@ -13,7 +14,10 @@ def main():
             lexer = Lexer(source)
             parser = Parser(lexer)
             visitor = ExecuteVisitor()
-            a = visitor.visit_program(parser.parse_program(), Context())
+            printerVisitor = PrintVisitor()
+            program = parser.parse_program()
+            printerVisitor.visit_program(program, Context())
+            a = visitor.visit_program(program, Context())
             print(a)
 
     else:

@@ -8,6 +8,7 @@ from interpreter.parser.syntax_error import *
 from interpreter.parser.syntax_tree import *
 from interpreter.interpreter.executeVisitor import ExecuteVisitor
 from interpreter.interpreter.interpreter import Context, Interpreter
+from interpreter.interpreter.interpreter_error import *
 
 class TestInterpreter:
     def test_false_and_expression(self):
@@ -359,6 +360,22 @@ class TestInterpreter:
             visitor = ExecuteVisitor()
             with pytest.raises(TypeError):
                 visitor.visit_program(result, Context())
+    
+    def test_recursion_within_limit(self):
+        parser = self._get_parser('def factorial(n) {if (n <= 1) {return 1;} else {return n * factorial(n - 1);}} def main() {return factorial(5);}')
+        result = parser.parse_program()
+        context = Context(recursion_limit=100)
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, context)
+        assert ret == 120
+
+    def test_recursion_exceeds_limit(self):
+        parser = self._get_parser('def infiniteRecursion(n) {return infiniteRecursion(n + 1);} def main() {return infiniteRecursion(1);}')
+        result = parser.parse_program()
+        context = Context(recursion_limit=50)
+        visitor = ExecuteVisitor()
+        with pytest.raises(RecursionLimitExceeded):
+            visitor.visit_program(result, context)
 
     @staticmethod
     def _get_parser(string: str) -> Parser:

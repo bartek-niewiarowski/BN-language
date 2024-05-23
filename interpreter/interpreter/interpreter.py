@@ -1,12 +1,14 @@
 from .builtins import built_in_functions, lambda_functions
-
+from .interpreter_error import *
 
 class Context:
-    def __init__(self):
+    def __init__(self, recursion_limit = 1000):
         self.functions = built_in_functions.copy()
         self.lambda_funtions = lambda_functions.copy()
         self.variables = {}
         self.includes = {}
+        self.recursion_depth = 0
+        self.recursion_limit = recursion_limit
 
     def add_function(self, name, fun):
         self.functions[name] = fun
@@ -28,11 +30,21 @@ class Context:
     def get_include(self, name):
         obj = self.includes.get(name)
         return obj
+    
+    def increment_recursion_depth(self):
+        if self.recursion_depth >= self.recursion_limit:
+            raise RecursionLimitExceeded()
+        self.recursion_depth += 1
+
+    def decrement_recursion_depth(self):
+        if self.recursion_depth > 0:
+            self.recursion_depth -= 1
 
     def new_context(self):
-        new_context = Context()
+        new_context = Context(self.recursion_limit)
         new_context.functions = self.functions
         new_context.includes = self.includes
+        new_context.recursion_depth = self.recursion_depth
         return new_context
 
 

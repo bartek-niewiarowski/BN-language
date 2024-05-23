@@ -240,39 +240,46 @@ class ExecuteVisitor(Visitor):
             raise RuntimeError(f"Error during assignment: {str(e)}")
     
     def visit_function_call(self, element: FunctionCall, context: Context):
-        if element.parent is not None:
-            parent_value = element.parent.accept(self, context)
-            
-            if isinstance(parent_value, list):
-                function = context.functions.get(element.function_name)
-                if not function:
-                    raise FunctionDoesNotExist(element.function_name)
+        try:
+            context.increment_recursion_depth()
+            if element.parent is not None:
+                parent_value = element.parent.accept(self, context)
+
+                if isinstance(parent_value, list):
+                    function = context.functions.get(element.function_name)
+                    if not function:
+                        raise FunctionDoesNotExist(element.function_name)
+                else:
+                    function = getattr(parent_value, element.function_name, None)
+                    if function is None:
+                        raise FunctionDoesNotExist(element.function_name)
             else:
-                function = getattr(parent_value, element.function_name, None)
+                function = context.get_function(element.function_name) or self.get_class_method(element, context) or self.get_constructor(element, context)
                 if function is None:
                     raise FunctionDoesNotExist(element.function_name)
-        else:
-            function = context.get_function(element.function_name) or self.get_class_method(element, context) or self.get_constructor(element, context)
-            if function is None:
-                raise FunctionDoesNotExist(element.function_name)
-        
-        if hasattr(element.arguments, "arguments"):
-            args = [arg.accept(self, context) for arg in element.arguments.arguments]
-        elif hasattr(element.arguments, "variable_name"):
-            args = element.arguments.accept(self, context)
 
-        if isinstance(function, FunctionDefintion):
-            function_context = context.new_context()
-            for arg, param in zip(args, function.parameters):
-                function_context.add_variable(param.name, arg)
-            return function.statements.accept(self, function_context)
-        else:
-            if element.parent is not None and isinstance(parent_value, list):
-                if element.function_name in context.lambda_funtions:
-                    return function(parent_value, element.arguments.statements, self, context, args)
-                return function(parent_value, *args)
+            if hasattr(element.arguments, "arguments"):
+                args = [arg.accept(self, context) for arg in element.arguments.arguments]
+            elif hasattr(element.arguments, "variable_name"):
+                args = element.arguments.accept(self, context)
+
+            if isinstance(function, FunctionDefintion):
+                function_context = context.new_context()
+                for arg, param in zip(args, function.parameters):
+                    function_context.add_variable(param, arg)
+                return function.statements.accept(self, function_context)
             else:
-                return function(*args)
+                if element.parent is not None and isinstance(parent_value, list):
+                    if element.function_name in context.lambda_funtions:
+                        return function(parent_value, element.arguments.statements, self, context, args)
+                    return function(parent_value, *args)
+                else:
+                    return function(*args)
+        except RecursionLimitExceeded as e:
+            # Handle the custom recursion limit exceeded error if necessary
+            raise e
+        finally:
+            context.decrement_recursion_depth()
     
     def get_class_method(self, element, context):
         for obj in context.includes.values():

@@ -21,3 +21,7 @@ class OrOperationError(Exception):
 class BreakException(Exception):
     """Wyjątek używany do obsługi instrukcji break w pętlach."""
     pass
+
+class RecursionLimitExceeded(Exception):
+    def __init__(self):
+        super().__init__()
