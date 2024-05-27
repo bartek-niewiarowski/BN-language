@@ -265,9 +265,15 @@ class ExecuteVisitor(Visitor):
 
             if isinstance(function, FunctionDefintion):
                 function_context = context.new_context()
+                reference_args = []
                 for arg, param in zip(args, function.parameters):
+                    if isinstance(arg, list):
+                        reference_args.append(param)
                     function_context.add_variable(param, arg)
-                return function.statements.accept(self, function_context)
+                ret = function.statements.accept(self, function_context)
+                for arg in reference_args:
+                    context.add_variable(arg, function_context.get_variable(arg))
+                return ret
             else:
                 if element.parent is not None and isinstance(parent_value, list):
                     if element.function_name in context.lambda_funtions:
@@ -276,7 +282,6 @@ class ExecuteVisitor(Visitor):
                 else:
                     return function(*args)
         except RecursionLimitExceeded as e:
-            # Handle the custom recursion limit exceeded error if necessary
             raise e
         finally:
             context.decrement_recursion_depth()

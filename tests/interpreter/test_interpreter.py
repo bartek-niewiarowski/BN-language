@@ -376,6 +376,20 @@ class TestInterpreter:
         visitor = ExecuteVisitor()
         with pytest.raises(RecursionLimitExceeded):
             visitor.visit_program(result, context)
+    
+    def test_no_reference_args(self):
+        parser = self._get_parser('def increment(x) {x = x + 1;} def main() {x = 5; increment(x); return x;}\n')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, Context())
+        assert ret == 5
+    
+    def test_reference_args(self):
+        parser = self._get_parser('def setZero(x) {x = [0];} def main() {x = [5]; setZero(x); return x;}\n')
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, Context())
+        assert ret == [0]
 
     @staticmethod
     def _get_parser(string: str) -> Parser:

@@ -18,7 +18,10 @@ class Context:
         return func
 
     def add_variable(self, name, value):
-        self.variables[name] = value
+        if isinstance(value, list):
+            self.variables[name] = value  # list by reference
+        else:
+            self.variables[name] = value.copy() if hasattr(value, 'copy') else value  # others by value
 
     def get_variable(self, name):
         var = self.variables.get(name)
