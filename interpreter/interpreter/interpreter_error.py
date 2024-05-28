@@ -25,3 +25,7 @@ class BreakException(Exception):
 class RecursionLimitExceeded(Exception):
     def __init__(self):
         super().__init__()
+
+class MainFunctionRequired(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__("Main function is required")

@@ -16,40 +16,40 @@ class TestInterpreter:
         result = parser.parse_and_expression()
         context = Context()
         visitor = ExecuteVisitor()
-        a = visitor.visit_and_expression(result, context)
-        assert a is False
+        visitor.visit_and_expression(result, context)
+        assert context.last_result is False
 
     def test_true_and_expression(self):
         parser = self._get_parser('true and true')
         result = parser.parse_and_expression()
         context = Context()
         visitor = ExecuteVisitor()
-        a = visitor.visit_and_expression(result, context)
-        assert a is True
+        visitor.visit_and_expression(result, context)
+        assert context.last_result is True
     
     def test_true_and_expression_with_int(self):
         parser = self._get_parser('true and 1')
         result = parser.parse_and_expression()
         context = Context()
         visitor = ExecuteVisitor()
-        a = visitor.visit_and_expression(result, context)
-        assert a is True
+        visitor.visit_and_expression(result, context)
+        assert context.last_result is True
     
     def test_true_or_expression(self):
         parser = self._get_parser('true or false')
         result = parser.parse_or_expression()
         context = Context()
         visitor = ExecuteVisitor()
-        a = visitor.visit_or_expression(result, context)
-        assert a is True
+        visitor.visit_or_expression(result, context)
+        assert context.last_result is True
     
     def test_false_or_expression(self):
         parser = self._get_parser('false or false')
         result = parser.parse_or_expression()
         context = Context()
         visitor = ExecuteVisitor()
-        a = visitor.visit_or_expression(result, context)
-        assert a is False
+        visitor.visit_or_expression(result, context)
+        assert context.last_result is False
     
     def test_assignment(self):
         parser = self._get_parser('x = 5;')
@@ -67,7 +67,8 @@ class TestInterpreter:
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
-            results.append(visitor.visit_sum_expression(result, context))
+            visitor.visit_sum_expression(result, context)
+            results.append(context.last_result)
         assert results == [2, 3.0, 3.5, "true2", "true2.5", "true false", 5, 1, [1, 2, 3, 4]]
     
     def test_sum_invalid_types(self):
@@ -88,7 +89,8 @@ class TestInterpreter:
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
-            results.append(visitor.visit_sub_expression(result, context))
+            visitor.visit_sub_expression(result, context)
+            results.append(context.last_result)
         assert results == [0, 0, 0.5, 1, -1]
     
     def test_sub_invalid_types(self):
@@ -109,7 +111,8 @@ class TestInterpreter:
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
-            results.append(visitor.visit_mul_expression(result, context))
+            visitor.visit_mul_expression(result, context)
+            results.append(context.last_result)
         assert results == [1, 2.25, 3.0, "aaa", "abc"]
 
     def test_mul_invalid_types(self):
@@ -130,7 +133,8 @@ class TestInterpreter:
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
-            results.append(visitor.visit_div_expression(result, context))
+            visitor.visit_div_expression(result, context)
+            results.append(context.last_result)
         assert results == [1, 1, 2.0]
 
     def test_div_invalid_types(self):
@@ -162,7 +166,8 @@ class TestInterpreter:
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            results.append(visitor.visit_equal_operation(result, context))
+            visitor.visit_equal_operation(result, context)
+            results.append(context.last_result)
         assert results == [True, True, False, True, False, True, False]
 
     def test_comparison_not_equal(self):
@@ -174,7 +179,8 @@ class TestInterpreter:
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            results.append(visitor.visit_not_equal_operation(result, context))
+            visitor.visit_not_equal_operation(result, context)
+            results.append(context.last_result)
         assert results == [True, True, True, False, False, True, False, True, True]
 
     def test_comparison_greater(self):
@@ -185,7 +191,8 @@ class TestInterpreter:
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            results.append(visitor.visit_greater_operation(result, context))
+            visitor.visit_greater_operation(result, context)
+            results.append(context.last_result)
         assert results == [False, False, True, False, False, False]
 
     def test_comparison_greater_equal(self):
@@ -196,7 +203,8 @@ class TestInterpreter:
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            results.append(visitor.visit_greater_equal_operation(result, context))
+            visitor.visit_greater_equal_operation(result, context)
+            results.append(context.last_result)
         assert results == [False, False, True, True, True, False]
 
     def test_comparison_less(self):
@@ -207,7 +215,8 @@ class TestInterpreter:
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            results.append(visitor.visit_less_operation(result, context))
+            visitor.visit_less_operation(result, context)
+            results.append(context.last_result)
         assert results == [True, True, False, False, False, True]
 
     def test_comparison_less_equal(self):
@@ -218,96 +227,105 @@ class TestInterpreter:
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            results.append(visitor.visit_less_equal_operation(result, context))
+            visitor.visit_less_equal_operation(result, context)
+            results.append(context.last_result)
         assert results == [True, True, False, True, True, True]        
     
     def test_program(self):
         parser = self._get_parser('def main() {x=5;\nreturn x;}\n')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
-        a = visitor.visit_program(result, Context())
-        assert a == 5
+        context= Context()
+        visitor.visit_program(result, context)
+        assert context.last_result == 5
     
     def test_includes(self):
         parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); return [s.name, s.age];}')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
         context = Context()
-        ret = visitor.visit_program(result, context)
-        assert ret == ["Adam", 22]
+        visitor.visit_program(result, context)
+        assert context.last_result == ["Adam", 22]
     
     def test_include_assignment(self):
         parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); b = s.age; return b;}')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
         context = Context()
-        ret = visitor.visit_program(result, context)
-        assert ret == 22
+        visitor.visit_program(result, context)
+        assert context.last_result == 22
 
     def test_include_change_field_value(self):
         parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); s.age = 23; return s.age;}')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
         context = Context()
-        ret = visitor.visit_program(result, context)
-        assert ret == 23
+        visitor.visit_program(result, context)
+        assert context.last_result == 23
 
     def test_include_call_method(self):
         parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); return s.greet();}')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
         context = Context()
-        ret = visitor.visit_program(result, context)
-        assert ret == "Hello, my name is Adam and I am 22 years old."
+        visitor.visit_program(result, context)
+        assert context.last_result == "Hello, my name is Adam and I am 22 years old."
 
     def test_array_append(self):
         parser = self._get_parser('def main() {lst = [1, 2, 3];\n lst.append(4);\n return lst;}\n')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
-        assert ret == [1, 2, 3, 4]
+        context = Context()
+        visitor.visit_program(result, context)
+        assert context.last_result == [1, 2, 3, 4]
     
     def test_array_remove(self):
         parser = self._get_parser('def main() {lst = [1, 2, 3];\n lst.remove(2);\n return lst;}\n')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
-        assert ret == [1, 2]
+        context = Context()
+        visitor.visit_program(result, context)
+        assert context.last_result == [1, 2]
 
     def test_array_get(self):
         parser = self._get_parser('def main() {lst = [1, 2, 3];\n lst.append(4);\n return lst.get(0);}\n')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
-        assert ret == 1
+        context = Context()
+        visitor.visit_program(result, context)
+        assert context.last_result == 1
     
     def test_while(self):
         parser = self._get_parser('def main() {a = 0; while(a <= 5) {a = a + 1;} return a;}')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
-        assert ret == 6
+        context = Context()
+        visitor.visit_program(result, context)
+        assert context.last_result == 6
     
     def test_if(self):
         parser = self._get_parser('def main() {a = 5; if(a >= 0) {return a;} else {return 1;}}')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
-        assert ret == 5
+        context = Context()
+        visitor.visit_program(result, context)
+        assert context.last_result == 5
     
     def test_if_else(self):
         parser = self._get_parser('def main() {a = 5; if(a >= 6) {return a;} else {return 1;}}')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
-        assert ret == 1
+        context = Context()
+        visitor.visit_program(result, context)
+        assert context.last_result == 1
     
     def test_lambda_foreach(self):
         parser = self._get_parser('def main() {a = [1, 2, 3]; b = a.foreach($x => { x = x + 1; }); return b;}')
         result = parser.parse_program()
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
-        assert ret == [2, 3, 4]
+        context = Context()
+        visitor.visit_program(result, context)
+        assert context.last_result == [2, 3, 4]
     
     def test_lambda_foreach_many_stms(self):
         parser = self._get_parser('def main() {a = [1, 2, 3]; b = a.foreach($x => { y = x + 1; y = y * y; x = y; }); return b;}')

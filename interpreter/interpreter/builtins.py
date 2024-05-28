@@ -52,7 +52,7 @@ def foreach(lst, statements, visitator, context, name):
         statements.accept(visitator, context)
         items.append(context.variables.get(name))
     return items
-
+# klasa reprezentująca funkcję wbudowaną
 built_in_functions = {
     'print': print,
     'scan': input,

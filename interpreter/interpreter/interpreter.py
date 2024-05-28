@@ -9,6 +9,13 @@ class Context:
         self.includes = {}
         self.recursion_depth = 0
         self.recursion_limit = recursion_limit
+        self.last_result = None
+        self.return_flag = False
+        self.break_flag = False
+    
+    def reset_flags(self):
+        self.return_flag = False
+        self.break_flag = False
 
     def add_function(self, name, fun):
         self.functions[name] = fun
@@ -18,10 +25,7 @@ class Context:
         return func
 
     def add_variable(self, name, value):
-        if isinstance(value, list):
-            self.variables[name] = value  # list by reference
-        else:
-            self.variables[name] = value.copy() if hasattr(value, 'copy') else value  # others by value
+        self.variables[name] = value  # list by reference
 
     def get_variable(self, name):
         var = self.variables.get(name)

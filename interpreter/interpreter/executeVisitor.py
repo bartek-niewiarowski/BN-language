@@ -15,11 +15,11 @@ class ExecuteVisitor(Visitor):
             include.accept(self, context)
         
         if 'main' not in context.functions:
-            raise Exception()
-        main_call = FunctionCall(SourcePosition(1, 1), 'main', FunctionArguments(SourcePosition(1, 1), []), None)
-        ret_code = main_call.accept(self, context)
-        if ret_code is None:
-            ret_code = 0
+            raise MainFunctionRequired()
+        #main_call = FunctionCall(SourcePosition(1, 1), 'main', None), None)
+        main_call = FunctionCall(context.functions.get('main').position, 'main', FunctionArguments(context.functions.get('main').position, []))
+        main_call.accept(self, context)
+        ret_code = context.last_result if context.last_result is not None else 0
         return ret_code
 
     def visit_function_definition(self, element, context: Context):
@@ -44,53 +44,57 @@ class ExecuteVisitor(Visitor):
 
     def visit_lambda_expression(self, element: LambdaExpression, context: Context):
         context.add_variable(element.variable_name, None)
-        return element.variable_name
+        context.last_result = element.variable_name
 
     def visit_function_arguments(self, element, context: Context):
-        args = [arg.accept(self, context) for arg in element.arguments]
-        return args
+        context.last_result = [arg.accept(self, context) for arg in element.arguments]
 
     def visit_identifier(self, element: Identifier, context: Context):
         if element.parent is not None:
-            parent_value = element.parent.accept(self, context)
-            return getattr(parent_value, element.name)
+            element.parent.accept(self, context)
+            context.last_result =  getattr(context.last_result, element.name)
         else:
-            return context.get_variable(element.name)
+            context.last_result = context.get_variable(element.name)
 
     def visit_parameter(self, element, context) :
         pass
 
-    def visit_return_statement(self, element, context: Context) :
-        return element.statement.accept(self, context)
+    def visit_return_statement(self, element, context: Context):
+        element.statement.accept(self, context)
+        context.return_flag = True
 
-    def visit_if_statement(self, element: IfStatement, context: Context) :
-        if element.condition.accept(self, context):
-            return element.statements.accept(self, context)
+    def visit_if_statement(self, element: IfStatement, context: Context):
+        element.condition.accept(self, context)
+        if context.last_result:
+            element.statements.accept(self, context)
         elif element.else_statement:
-            return element.else_statement.accept(self, context)
+            element.else_statement.accept(self, context)
 
     def visit_while_statement(self, element: WhileStatement, context: Context) :
-        try:
-            while element.condition.accept(self, context):
-                try:
-                    if ret := element.statements.accept(self, context):
-                        return ret
-                except BreakException:
-                    break
-        except BreakException:
-            pass
+        while True:
+            context.reset_flags()
+            element.condition.accept(self, context)
+            if not context.last_result or context.break_flag:
+                break
 
-    def visit_break_statement(self, element, context) :
-        raise BreakException()
+            element.statements.accept(self, context)
+            if context.return_flag or context.break_flag:
+                break
+    
+    def visit_break_statement(self, element, context: Context) :
+        context.break_flag = True
+        return
 
-    def visit_or_expression(self, element: OrExpression, context) :
-        x = element.nodes[0].accept(self, context)
+    def visit_or_expression(self, element: OrExpression, context: Context) :
+        element.nodes[0].accept(self, context)
+        x = context.last_result
         for node in element.nodes[1:]:
             temp_cond = isinstance(x, np.ndarray)
             if (temp_cond and x.dtype == bool and x.all()) or (not temp_cond and x):
                 return True
             
-            term = node.accept(self, context)
+            node.accept(self, context)
+            term = context.last_result6
             if (temp_cond and x.dtype != bool) or \
                 isinstance(term, np.ndarray) and term.dtype != bool:
                 raise OrOperationError(x, term)
@@ -100,16 +104,18 @@ class ExecuteVisitor(Visitor):
                 raise OrOperationError(x, term)
             else:
                 x = bool(x) or bool(term)
-        return x
+        context.last_result = x
 
     def visit_and_expression(self, element: AndExpression, context: Context) :
-        x = element.nodes[0].accept(self, context)
+        element.nodes[0].accept(self, context)
+        x = context.last_result
         for node in element.nodes[1:]:
             temp_cond = isinstance(x, np.ndarray)
             if (temp_cond and x.dtype == bool and not x.all()) or (not temp_cond and not x):
                 return False
             
-            term = node.accept(self, context)
+            node.accept(self, context)
+            term = context.last_result
             if (temp_cond and x.dtype != bool) or \
                 isinstance(term, np.ndarray) and term.dtype != bool:
                 raise AndOperationError(x, term)
@@ -119,24 +125,28 @@ class ExecuteVisitor(Visitor):
                 raise AndOperationError(x, term)
             else:
                 x = bool(x) and bool(term)
-        return x
+        context.last_result = x
     
     def visit_negation(self, element: Negation, context: Context) :
         if element.negation_type == 'Logic':
             try:
-                return not element.node.accept(self, context)
+                element.node.accept(self, context)
+                context.last_result = not context.last_result
             except TypeError:
                 raise TypeError()
         elif element.negation_type == 'Arth':
             try:
-                return - element.node.accept(self, context)
+                element.node.accept(self, context)
+                context.last_result = - context.last_result
             except TypeError:
                 raise TypeError()
 
     def visit_sum_expression(self, element: SumExpression, context:Context):
-        left_value = element.left.accept(self, context)
-        right_value = element.right.accept(self, context)
-        return self.check_sum_types(left_value, right_value)
+        element.left.accept(self, context)
+        left_value = context.last_result
+        element.right.accept(self, context)
+        right_value = context.last_result
+        context.last_result = self.check_sum_types(left_value, right_value)
     
     def check_sum_types(self, left_value, right_value):
         if isinstance(left_value, int) and isinstance(right_value, int):
@@ -153,9 +163,11 @@ class ExecuteVisitor(Visitor):
             raise TypeError(f"Unsupported operand types for +: '{type(left_value).__name__}' and '{type(right_value).__name__}'")
 
     def visit_sub_expression(self, element: SubExpression, context: Context):
-        left_value = element.left.accept(self, context)
-        right_value = element.right.accept(self, context)
-        return self.check_sub_types(left_value, right_value)
+        element.left.accept(self, context)
+        left_value = context.last_result
+        element.right.accept(self, context)
+        right_value = context.last_result
+        context.last_result = self.check_sub_types(left_value, right_value)
     
     def check_sub_types(self, left_value, right_value):
         if isinstance(left_value, (float, int)) and isinstance(right_value, (float, int))\
@@ -165,9 +177,11 @@ class ExecuteVisitor(Visitor):
             raise TypeError(f"Unsupported operand types for -: '{type(left_value).__name__}' and '{type(right_value).__name__}'")
 
     def visit_mul_expression(self, element: MulExpression, context: Context):
-        left_value = element.left.accept(self, context)
-        right_value = element.right.accept(self, context)
-        return self.check_mul_types(left_value, right_value)
+        element.left.accept(self, context)
+        left_value = context.last_result
+        element.right.accept(self, context)
+        right_value = context.last_result
+        context.last_result = self.check_mul_types(left_value, right_value)
     
     def check_mul_types(self, left_value, right_value):
         if isinstance(left_value, (float, int)) and isinstance(right_value, (float, int))\
@@ -178,11 +192,13 @@ class ExecuteVisitor(Visitor):
             raise TypeError(f"Unsupported operand types for *: '{type(left_value).__name__}' and '{type(right_value).__name__}'")
 
     def visit_div_expression(self, element: DivExpression, context: Context):
-        left_value = element.left.accept(self, context)
-        right_value = element.right.accept(self, context)
+        element.left.accept(self, context)
+        left_value = context.last_result
+        element.right.accept(self, context)
+        right_value = context.last_result
         if right_value == 0:
             raise ZeroDivisionError("Division by zero is not allowed")
-        return self.check_div_types(left_value, right_value)
+        context.last_result = self.check_div_types(left_value, right_value)
     
     def check_div_types(self, left_value, right_value):
         if isinstance(left_value, (float, int)) and isinstance(right_value, (float, int)):
@@ -190,47 +206,76 @@ class ExecuteVisitor(Visitor):
         else:
             raise TypeError(f"Unsupported operand types for *: '{type(left_value).__name__}' and '{type(right_value).__name__}'")
 
-    def visit_equal_operation(self, element: EqualOperation, context: Context) :
-        return element.left.accept(self, context) == element.right.accept(self, context)
+    def visit_equal_operation(self, element: EqualOperation, context: Context):
+        element.left.accept(self, context)
+        left = context.last_result
+        element.right.accept(self, context)
+        right = context.last_result
+        context.last_result = left == right
 
     def visit_not_equal_operation(self, element: NotEqualOperation, context: Context) :
-        return element.left.accept(self, context) != element.right.accept(self, context)
+        element.left.accept(self, context)
+        left = context.last_result
+        element.right.accept(self, context)
+        right = context.last_result
+        context.last_result = left != right
 
     def visit_greater_operation(self, element: GreaterOperation, context: Context) :
-        return element.left.accept(self, context) > element.right.accept(self, context)
+        element.left.accept(self, context)
+        left = context.last_result
+        element.right.accept(self, context)
+        right = context.last_result
+        context.last_result = left > right
 
     def visit_greater_equal_operation(self, element: GreaterEqualOperation, context: Context) :
-        return element.left.accept(self, context) >= element.right.accept(self, context)
+        element.left.accept(self, context)
+        left = context.last_result
+        element.right.accept(self, context)
+        right = context.last_result
+        context.last_result = left >= right
 
     def visit_less_operation(self, element: LessOperation, context: Context):
-        return element.left.accept(self, context) < element.right.accept(self, context)
+        element.left.accept(self, context)
+        left = context.last_result
+        element.right.accept(self, context)
+        right = context.last_result
+        context.last_result = left < right
 
     def visit_less_equal_operation(self, element: LessEqualOperation, context: Context):
-        return element.left.accept(self, context) <= element.right.accept(self, context)
+        element.left.accept(self, context)
+        left = context.last_result
+        element.right.accept(self, context)
+        right = context.last_result
+        context.last_result = left <= right
 
-    def visit_literal_bool(self, element: LiteralBool, context):
-        return element.value
+    def visit_literal_bool(self, element: LiteralBool, context: Context):
+        context.last_result =  element.value
 
-    def visit_literal_int(self, element: LiteralInt, context):
-        return element.value
+    def visit_literal_int(self, element: LiteralInt, context: Context):
+        context.last_result =  element.value
 
-    def visit_literal_float(self, element: LiteralFloat, context):
-        return element.value
+    def visit_literal_float(self, element: LiteralFloat, context: Context):
+        context.last_result =  element.value
 
-    def visit_literal_string(self, element: LiteralString, context):
-        return element.value
+    def visit_literal_string(self, element: LiteralString, context: Context):
+        context.last_result =  element.value
+    # opakowanie w obiekt literałów, plus opakowanie obiektu w ObjectValue - do zastanowienia
 
-    def visit_array(self, element, context):
+    def visit_array(self, element, context: Context):
         value = []
         for item in element.items:
-            value.append(item.accept(self, context))
-        return value
+            item.accept(self, context)
+            value.append(context.last_result)
+        context.last_result = value
 
     def visit_assignment(self, element: Assignment, context: Context):
+        # opakowanie wartosci w obiekcie
         try:
-            value = element.value.accept(self, context)
+            element.value.accept(self, context)
+            value = context.last_result
             if element.target.parent:
-                object = element.target.parent.accept(self, context)
+                element.target.parent.accept(self, context)
+                object = context.last_result
                 setattr(object, element.target.name, value)
             else:
                 context.add_variable(element.target.name, value)
@@ -243,8 +288,11 @@ class ExecuteVisitor(Visitor):
         try:
             context.increment_recursion_depth()
             if element.parent is not None:
-                parent_value = element.parent.accept(self, context)
+                element.parent.accept(self, context)
+                parent_value = context.last_result
 
+                # obiekt opakowujący obiekt listy i innych wartości
+                # po opakowaniu jednolita obsługa wszystkiego
                 if isinstance(parent_value, list):
                     function = context.functions.get(element.function_name)
                     if not function:
@@ -257,30 +305,37 @@ class ExecuteVisitor(Visitor):
                 function = context.get_function(element.function_name) or self.get_class_method(element, context) or self.get_constructor(element, context)
                 if function is None:
                     raise FunctionDoesNotExist(element.function_name)
-
+            # w function call tylko przygotowanie args, bez powiazania
             if hasattr(element.arguments, "arguments"):
-                args = [arg.accept(self, context) for arg in element.arguments.arguments]
+                args = []
+                for arg in element.arguments.arguments:
+                    arg.accept(self, context)
+                    args.append(context.last_result)
             elif hasattr(element.arguments, "variable_name"):
-                args = element.arguments.accept(self, context)
+                element.arguments.accept(self, context)
+                args = context.last_result
 
             if isinstance(function, FunctionDefintion):
+                # czy nie powinno to byc w functionDefinition? poniezej odwiedzenie obiektu
                 function_context = context.new_context()
                 reference_args = []
                 for arg, param in zip(args, function.parameters):
                     if isinstance(arg, list):
                         reference_args.append(param)
                     function_context.add_variable(param, arg)
-                ret = function.statements.accept(self, function_context)
+                function.statements.accept(self, function_context)
+                context.last_result = function_context.last_result
                 for arg in reference_args:
                     context.add_variable(arg, function_context.get_variable(arg))
-                return ret
             else:
                 if element.parent is not None and isinstance(parent_value, list):
                     if element.function_name in context.lambda_funtions:
-                        return function(parent_value, element.arguments.statements, self, context, args)
-                    return function(parent_value, *args)
+                        context.last_result = function(parent_value, element.arguments.statements, self, context, args)
+                        return
+                    context.last_result = function(parent_value, *args)
+                    return
                 else:
-                    return function(*args)
+                    context.last_result = function(*args)
         except RecursionLimitExceeded as e:
             raise e
         finally:
@@ -292,14 +347,16 @@ class ExecuteVisitor(Visitor):
                 return function
         return None
     
-    def get_constructor(self, element, context):       
+    def get_constructor(self, element, context):
+        # przy include dodanie konstruktora do moich funkcjach       
         for class_name, cls in context.includes.items():
             if class_name == element.function_name:
                 return cls
         return None
 
     def visit_statements(self, element: Statements, context):
-            for statement in element.statements:
-                ret = statement.accept(self, context)
-                if ret:
-                    return ret
+        for statement in element.statements:
+            statement.accept(self, context)
+            if context.return_flag or context.break_flag:
+                # If a return or break was executed, stop processing more statements
+                break
