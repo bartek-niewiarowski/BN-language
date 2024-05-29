@@ -270,6 +270,23 @@ class TestInterpreter:
         context = Context()
         visitor.visit_program(result, context)
         assert context.last_result == "Hello, my name is Adam and I am 22 years old."
+    
+    def test_include_call_method_many_classes(self):
+        parser = self._get_parser("""from student import Student, Class; 
+                                  def main() 
+                                  {s = Student("Adam", 22); 
+                                  class = Class(35, "Koc"); 
+                                  a = class.getTeacher(); 
+                                  b = class.getStudents(); 
+                                  class.setStudents(40); 
+                                  class.setTeacher("Nowak"); 
+                                  return [a, b, class.getTeacher(), class.getStudents()];}""")
+            
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        context = Context()
+        visitor.visit_program(result, context)
+        assert context.last_result == ["Koc", 35, "Nowak", 40]
 
     def test_array_append(self):
         parser = self._get_parser('def main() {lst = [1, 2, 3];\n lst.append(4);\n return lst;}\n')

@@ -9,6 +9,15 @@ class BuiltInFunction:
         res =  self.function(*args)
         context.last_result = res
 
+class LambdaFunction(BuiltInFunction):
+    def __init__(self, function):
+        super().__init__(function)
+    
+    def accept(self, visitor, context, args, method_name):
+        args = [visitor, context] + args
+        res = self.function(*args)
+        context.last_result = res
+
 class ImportedObject():
     def __init__(self, obj):
         self.obj = obj
@@ -67,20 +76,19 @@ def get(lst, index):
     else:
         raise IndexError("Index out of range")
 
-def where(lst, statements, visitator, context, name):
+def where(visitor, context, lst, name, statements):
     result = []
     for item in lst:
         context.add_variable(name, item)
-        if statements.accept(visitator, context):
+        if statements.accept(visitor, context):
             result.append(item)
     return result
 
-def foreach(lst, statements, visitator, context, name):
+def foreach(visitor, context, lst, name, statements):
     items = []
     for item in lst:
         context.add_variable(name, item)
-        #item = statements.accept(visitator, context)
-        statements.accept(visitator, context)
+        statements.accept(visitor, context)
         items.append(context.variables.get(name))
     return items
 
@@ -95,8 +103,8 @@ built_in_functions = {
     'remove': BuiltInFunction(remove),
     'sort': BuiltInFunction(sort),
     'get': BuiltInFunction(get),
-    'where': BuiltInFunction(where),
-    'foreach': BuiltInFunction(foreach)
+    'where': LambdaFunction(where),
+    'foreach': LambdaFunction(foreach)
 }
 
 lambda_functions = ['where', 'foreach']

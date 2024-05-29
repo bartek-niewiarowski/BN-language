@@ -377,7 +377,7 @@ class ExecuteVisitor(Visitor):
                     args.append(context.last_result)
             elif hasattr(element.arguments, "variable_name"):
                 element.arguments.accept(self, context)
-                args = [context.last_result]
+                args = [context.last_result, element.arguments.statements]
             if parent_value:
                 args = [parent_value] + args
             
