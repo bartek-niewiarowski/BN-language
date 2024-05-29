@@ -4,7 +4,7 @@ class BuiltInFunction:
     def __init__(self, function):
         self.function = function
 
-    def accept(self, visitor, context, args):
+    def accept(self, visitor, context, args, method_name):
         # Wywołaj funkcję z przekazanymi argumentami
         res =  self.function(*args)
         context.last_result = res
@@ -13,18 +13,23 @@ class ImportedObject():
     def __init__(self, obj):
         self.obj = obj
 
-    def accept(self, visitor, context, args):
-        # Sprawdzamy, czy obiekt jest wywoływalny
-        if callable(self.obj):
-            # Jeśli obj jest funkcją lub metodą
-            context.last_result = self.obj(*args)
-        elif hasattr(self.obj, '__call__'):
-            # Jeśli obj jest obiektem z metodą __call__ (np. klasa z __call__)
-            context.last_result = self.obj.__call__(*args)
+    def accept(self, visitor, context, args, method_name=None):
+        if method_name:
+            # Sprawdzamy, czy obj posiada metodę o nazwie method_name
+            method = getattr(self.obj, method_name, None)
+            if method and callable(method):
+                # Wywołujemy metodę z przekazanymi argumentami
+                context.last_result = method(*args)
+            else:
+                raise AttributeError(f'Method {method_name} not found or not callable')
         else:
-            # Obiekt nie jest funkcją ani metodą; może to być np. instancja klasy lub wartość
-            # Możemy zdecydować, co zrobić w takim przypadku, np. zwrócić sam obiekt
-            context.last_result = self.obj
+            # Jeśli method_name nie jest podane, zachowujemy się jak wcześniej
+            if callable(self.obj):
+                context.last_result = self.obj(*args)
+            elif hasattr(self.obj, '__call__'):
+                context.last_result = self.obj.__call__(*args)
+            else:
+                context.last_result = self.obj
 
 def to_bool(x):
     if isinstance(x, np.ndarray):

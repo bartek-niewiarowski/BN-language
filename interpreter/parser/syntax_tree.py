@@ -34,7 +34,7 @@ class FunctionDefintion(Node):
         self.parameters = parameters
         self.statements = statements
 
-    def accept(self, visitor: Visitor, context, args) -> None:
+    def accept(self, visitor: Visitor, context, args, method_name) -> None:
         return visitor.visit_function_definition(self, context, args)
 
     def __str__(self):

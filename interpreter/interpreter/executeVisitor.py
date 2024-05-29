@@ -377,30 +377,32 @@ class ExecuteVisitor(Visitor):
                     args.append(context.last_result)
             elif hasattr(element.arguments, "variable_name"):
                 element.arguments.accept(self, context)
-                args = context.last_result
-            if isinstance(parent_value, list):
+                args = [context.last_result]
+            if parent_value:
                 args = [parent_value] + args
             
-            function = context.get_function(element.function_name) or self.get_class_method(element, context) or self.get_constructor(element, context)
+            if function := context.get_function(element.function_name) or self.get_constructor(element, context):
+                method_name = None 
+            elif function := self.get_class_method(element, context):
+                method_name = element.function_name
             if function is None:
                 raise FunctionDoesNotExist(element.function_name)
             function_context = context.new_context()
-            function.accept(self, function_context, args)
+            function.accept(self, function_context, args, method_name)
             context.last_result = function_context.last_result
         except RecursionLimitExceeded as e:
             raise e
         finally:
             context.decrement_recursion_depth()
     
-    def get_class_method(self, element, context):
-        for obj in context.includes.values():
-            if function := getattr(obj, element.function_name, None):
-                return function
+    def get_class_method(self, element, context: Context):
+        for obj in context.functions.values():
+            if hasattr(obj, 'obj') and hasattr(obj.obj, element.function_name):
+                return obj
         return None
     
-    def get_constructor(self, element, context):
-        # przy include dodanie konstruktora do moich funkcjach       
-        for class_name, cls in context.includes.items():
+    def get_constructor(self, element, context: Context):   
+        for class_name, cls in context.functions.items():
             if class_name == element.function_name:
                 return cls
         return None
