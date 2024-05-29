@@ -6,7 +6,6 @@ import numbers
 import sys, os
 from .builtins import ImportedObject
 
-
 class ExecuteVisitor(Visitor):
     def visit_program(self, element: Program, context: Context):
         for function in element.functions:
@@ -27,23 +26,6 @@ class ExecuteVisitor(Visitor):
             context.add_variable(param, arg)
             context.add_reference(arg, param)
         element.statements.accept(self, context)
-
-    def visit_include_statement_1(self, element: IncludeStatement, context: Context):
-        library_name = element.library_name
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
-        if project_root not in sys.path:
-            sys.path.insert(0, project_root)
-        
-        try:
-            module = importlib.import_module(library_name)
-            for obj_name in element.objects_names:
-                if hasattr(module, obj_name):
-                    obj = getattr(module, obj_name)
-                    context.add_include(obj_name, obj)
-                else:
-                    raise ImportError(f"Obiekt '{obj_name}' nie znaleziony w module '{library_name}'")
-        except ImportError as e:
-            raise ImportError(f"Nie można zaimportować: {str(e)}")
 
     def visit_include_statement(self, element: IncludeStatement, context: Context):
         library_name = element.library_name
@@ -304,63 +286,6 @@ class ExecuteVisitor(Visitor):
         except Exception as e:
             raise RuntimeError(f"Error during assignment: {str(e)}")
     
-    def visit_function_call_1(self, element: FunctionCall, context: Context):
-        try:
-            context.increment_recursion_depth()
-            if element.parent is not None:
-                element.parent.accept(self, context)
-                parent_value = context.last_result
-
-                # obiekt opakowujący obiekt listy i innych wartości
-                # po opakowaniu jednolita obsługa wszystkiego
-                if isinstance(parent_value, list):
-                    function = context.functions.get(element.function_name)
-                    if not function:
-                        raise FunctionDoesNotExist(element.function_name)
-                else:
-                    function = getattr(parent_value, element.function_name, None)
-                    if function is None:
-                        raise FunctionDoesNotExist(element.function_name)
-            else:
-                function = context.get_function(element.function_name) or self.get_class_method(element, context) or self.get_constructor(element, context)
-                if function is None:
-                    raise FunctionDoesNotExist(element.function_name)
-            # w function call tylko przygotowanie args, bez powiazania
-            if hasattr(element.arguments, "arguments"):
-                args = []
-                for arg in element.arguments.arguments:
-                    arg.accept(self, context)
-                    args.append(context.last_result)
-            elif hasattr(element.arguments, "variable_name"):
-                element.arguments.accept(self, context)
-                args = context.last_result
-
-            if isinstance(function, FunctionDefintion):
-                # czy nie powinno to byc w functionDefinition? poniezej odwiedzenie obiektu
-                function_context = context.new_context()
-                reference_args = []
-                for arg, param in zip(args, function.parameters):
-                    if isinstance(arg, list):
-                        reference_args.append(param)
-                    function_context.add_variable(param, arg)
-                function.statements.accept(self, function_context)
-                context.last_result = function_context.last_result
-                for arg in reference_args:
-                    context.add_variable(arg, function_context.get_variable(arg))
-            else:
-                if element.parent is not None and isinstance(parent_value, list):
-                    if element.function_name in context.lambda_funtions:
-                        context.last_result = function(parent_value, element.arguments.statements, self, context, args)
-                        return
-                    context.last_result = function(parent_value, *args)
-                    return
-                else:
-                    context.last_result = function(*args)
-        except RecursionLimitExceeded as e:
-            raise e
-        finally:
-            context.decrement_recursion_depth()
-    
     def visit_function_call(self, element: FunctionCall, context: Context):
         try:
             context.increment_recursion_depth()
@@ -422,5 +347,4 @@ class ExecuteVisitor(Visitor):
         for statement in element.statements:
             statement.accept(self, context)
             if context.return_flag or context.break_flag:
-                # If a return or break was executed, stop processing more statements
                 break

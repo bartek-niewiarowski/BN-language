@@ -93,10 +93,15 @@ def foreach(visitor, context, lst, name, statements):
         items.append(context.variables.get(name))
     return items
 
+def scan(prompt):
+    print(prompt)
+    val = input()
+    return val
+
 # klasa reprezentująca funkcję wbudowaną
 built_in_functions = {
     'print': BuiltInFunction(print),
-    'scan': BuiltInFunction(input),
+    'scan': BuiltInFunction(scan),
     'to_bool': BuiltInFunction(to_bool),
     'to_int': BuiltInFunction(to_int),
     'to_float': BuiltInFunction(to_float),
@@ -107,5 +112,3 @@ built_in_functions = {
     'where': LambdaFunction(where),
     'foreach': LambdaFunction(foreach)
 }
-
-lambda_functions = ['where', 'foreach']

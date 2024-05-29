@@ -425,6 +425,23 @@ class TestInterpreter:
         visitor = ExecuteVisitor()
         ret = visitor.visit_program(result, Context())
         assert ret == [0]
+    
+    def test_4(self):
+        parser = self._get_parser("""def increment(x) {
+                                        x = x + 1;
+                                        return x;
+                                    }
+
+                                    def main() {
+                                        x = 5;
+                                        print(x);
+                                        x = increment(x);
+                                        print(x);
+                                    }""")
+        result = parser.parse_program()
+        visitor = ExecuteVisitor()
+        ret = visitor.visit_program(result, Context())
+        assert ret == 0
 
     @staticmethod
     def _get_parser(string: str) -> Parser:

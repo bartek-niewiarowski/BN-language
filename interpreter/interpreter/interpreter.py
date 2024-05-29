@@ -1,11 +1,10 @@
-from .builtins import built_in_functions, lambda_functions
+from .builtins import built_in_functions
 from .interpreter_error import *
 import copy
 
 class Context:
     def __init__(self, recursion_limit = 1000):
         self.functions = built_in_functions.copy()
-        self.lambda_funtions = lambda_functions.copy()
         self.variables = {}
         self.includes = {}
         self.recursion_depth = 0

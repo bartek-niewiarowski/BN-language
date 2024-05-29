@@ -16,9 +16,10 @@ def main():
                 parser = Parser(lexer)
                 visitor = ExecuteVisitor()
                 printerVisitor = PrintVisitor()
+                context = Context()
                 program = parser.parse_program()
-                printerVisitor.visit_program(program, Context())
-                result = visitor.visit_program(program, Context())
+                #printerVisitor.visit_program(program, context)
+                result = visitor.visit_program(program, context)
                 print(result)
         except FileNotFoundError:
             print(f"Błąd: Nie znaleziono pliku '{file_path}'. Proszę sprawdzić ścieżkę i spróbować ponownie.")
