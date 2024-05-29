@@ -364,27 +364,19 @@ class ExecuteVisitor(Visitor):
     def visit_function_call(self, element: FunctionCall, context: Context):
         try:
             context.increment_recursion_depth()
-            args = []
             if element.parent is not None:
                 element.parent.accept(self, context)
                 parent_value = context.last_result
             else:
                 parent_value = None
             
-            if hasattr(element.arguments, "arguments"):
-                for arg in element.arguments.arguments:
-                    arg.accept(self, context)
-                    args.append(context.last_result)
-            elif hasattr(element.arguments, "variable_name"):
-                element.arguments.accept(self, context)
-                args = [context.last_result, element.arguments.statements]
-            if parent_value:
-                args = [parent_value] + args
+            args = self.get_args(element, context, parent_value)
             
             if function := context.get_function(element.function_name) or self.get_constructor(element, context):
                 method_name = None 
             elif function := self.get_class_method(element, context):
                 method_name = element.function_name
+            
             if function is None:
                 raise FunctionDoesNotExist(element.function_name)
             function_context = context.new_context()
@@ -394,6 +386,19 @@ class ExecuteVisitor(Visitor):
             raise e
         finally:
             context.decrement_recursion_depth()
+    
+    def get_args(self, element, context, parent_value):
+        args = []
+        if isinstance(element.arguments, FunctionArguments):
+            for arg in element.arguments.arguments:
+                arg.accept(self, context)
+                args.append(context.last_result)
+        elif isinstance(element.arguments, LambdaExpression):
+            element.arguments.accept(self, context)
+            args = [context.last_result, element.arguments.statements]
+        if parent_value:
+            args = [parent_value] + args
+        return args
     
     def get_class_method(self, element, context: Context):
         for obj in context.functions.values():
