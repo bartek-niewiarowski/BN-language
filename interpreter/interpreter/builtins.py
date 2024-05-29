@@ -80,7 +80,8 @@ def where(visitor, context, lst, name, statements):
     result = []
     for item in lst:
         context.add_variable(name, item)
-        if statements.accept(visitor, context):
+        statements.accept(visitor, context)
+        if context.last_result:
             result.append(item)
     return result
 

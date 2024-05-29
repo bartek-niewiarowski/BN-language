@@ -1,5 +1,6 @@
 from .builtins import built_in_functions, lambda_functions
 from .interpreter_error import *
+import copy
 
 class Context:
     def __init__(self, recursion_limit = 1000):
@@ -12,10 +13,18 @@ class Context:
         self.last_result = None
         self.return_flag = False
         self.break_flag = False
+        self.reference_args = []
     
     def reset_flags(self):
         self.return_flag = False
         self.break_flag = False
+    
+    def add_reference(self, arg, param):
+        if isinstance(arg, list):
+            self.reference_args.append(param)
+    
+    def reset_reference(self):
+        self.reference_args = []
 
     def add_function(self, name, fun):
         self.functions[name] = fun
@@ -25,11 +34,10 @@ class Context:
         return func
 
     def add_variable(self, name, value):
-        self.variables[name] = value  # list by reference
+        self.variables[name] = value
 
     def get_variable(self, name):
-        var = self.variables.get(name)
-        return var
+        return self.variables.get(name)
 
     def add_include(self, name, obj):
         self.includes[name] = obj

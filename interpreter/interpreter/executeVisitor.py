@@ -17,7 +17,6 @@ class ExecuteVisitor(Visitor):
         
         if 'main' not in context.functions:
             raise MainFunctionRequired()
-        #main_call = FunctionCall(SourcePosition(1, 1), 'main', None), None)
         main_call = FunctionCall(context.functions.get('main').position, 'main', FunctionArguments(context.functions.get('main').position, []))
         main_call.accept(self, context)
         ret_code = context.last_result if context.last_result is not None else 0
@@ -26,6 +25,7 @@ class ExecuteVisitor(Visitor):
     def visit_function_definition(self, element, context: Context, args):
         for arg, param in zip(args, element.parameters):
             context.add_variable(param, arg)
+            context.add_reference(arg, param)
         element.statements.accept(self, context)
 
     def visit_include_statement_1(self, element: IncludeStatement, context: Context):
@@ -382,6 +382,7 @@ class ExecuteVisitor(Visitor):
             function_context = context.new_context()
             function.accept(self, function_context, args, method_name)
             context.last_result = function_context.last_result
+            self.rewrite_reference(context, function_context)
         except RecursionLimitExceeded as e:
             raise e
         finally:
@@ -411,6 +412,11 @@ class ExecuteVisitor(Visitor):
             if class_name == element.function_name:
                 return cls
         return None
+    
+    def rewrite_reference(self, context: Context, function_context: Context):
+        for arg in function_context.reference_args:
+            context.add_variable(arg, function_context.get_variable(arg))
+        function_context.reset_reference()
 
     def visit_statements(self, element: Statements, context):
         for statement in element.statements:
