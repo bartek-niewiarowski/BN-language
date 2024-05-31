@@ -1,10 +1,9 @@
 from .builtins import built_in_functions
 from .interpreter_error import *
-import copy
 from ..parser.syntax_tree import FunctionCall, FunctionArguments
 
 class Context:
-    def __init__(self, recursion_limit = 1000):
+    def __init__(self, recursion_limit = 100):
         self.functions = built_in_functions.copy()
         self.variables = {}
         self.includes = {}

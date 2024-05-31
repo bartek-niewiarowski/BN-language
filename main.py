@@ -4,7 +4,7 @@ from interpreter.source.source import Source
 from interpreter.parser.parser import Parser
 from interpreter.interpreter.executeVisitor import ExecuteVisitor
 from interpreter.interpreter.printerVisitor import PrintVisitor
-from interpreter.interpreter.interpreter import Context
+from interpreter.interpreter.interpreter import Context, Interpreter
 
 def main():
     if len(sys.argv) > 1:
@@ -16,10 +16,9 @@ def main():
                 parser = Parser(lexer)
                 visitor = ExecuteVisitor()
                 printerVisitor = PrintVisitor()
-                context = Context()
-                program = parser.parse_program()
-                #printerVisitor.visit_program(program, context)
-                result = visitor.visit_program(program, context)
+                interpreter = Interpreter(parser.parse_program())
+                printerVisitor.visit_program(interpreter.program, interpreter.context)
+                result = interpreter.execute(visitor)
                 print(result)
         except FileNotFoundError:
             print(f"Błąd: Nie znaleziono pliku '{file_path}'. Proszę sprawdzić ścieżkę i spróbować ponownie.")

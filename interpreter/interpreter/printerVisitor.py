@@ -17,7 +17,7 @@ class PrintVisitor(Visitor):
             function.accept(self, context)
         self.indent_level -= 1
 
-    def visit_function_definition(self, node: FunctionDefintion, context):
+    def visit_function_definition(self, node: FunctionDefintion, context, args):
         self._print_indent(f"Function \"{node.name}\" at {node.position}")
         self.indent_level += 1
         params = ", ".join(obj for obj in node.parameters)
