@@ -16,10 +16,6 @@ class ExecuteVisitor(Visitor):
         
         if 'main' not in context.functions:
             raise MainFunctionRequired()
-        main_call = FunctionCall(context.functions.get('main').position, 'main', FunctionArguments(context.functions.get('main').position, []))
-        main_call.accept(self, context)
-        ret_code = context.last_result if context.last_result is not None else 0
-        return ret_code
 
     def visit_function_definition(self, element, context: Context, args):
         for arg, param in zip(args, element.parameters):
@@ -343,8 +339,9 @@ class ExecuteVisitor(Visitor):
             context.add_variable(arg, function_context.get_variable(arg))
         function_context.reset_reference()
 
-    def visit_statements(self, element: Statements, context):
+    def visit_statements(self, element: Statements, context: Context):
         for statement in element.statements:
             statement.accept(self, context)
             if context.return_flag or context.break_flag:
+                context.reset_flags()
                 break

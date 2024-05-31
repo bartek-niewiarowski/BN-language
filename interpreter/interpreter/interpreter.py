@@ -1,6 +1,7 @@
 from .builtins import built_in_functions
 from .interpreter_error import *
 import copy
+from ..parser.syntax_tree import FunctionCall, FunctionArguments
 
 class Context:
     def __init__(self, recursion_limit = 1000):
@@ -66,7 +67,10 @@ class Interpreter:
     def __init__(self, program):
         self.program = program
         self.context = Context()
-        self.context.functions.update(program.functions)
 
     def execute(self, visitor):
-        return self.program.accept(visitor, self.context)
+        self.program.accept(visitor, self.context)
+        main_call = FunctionCall(self.context.functions.get('main').position, 'main', FunctionArguments(self.context.functions.get('main').position, []))
+        main_call.accept(visitor, self.context)
+        ret_code = self.context.last_result if self.context.last_result is not None else 0
+        return ret_code

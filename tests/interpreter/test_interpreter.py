@@ -233,43 +233,38 @@ class TestInterpreter:
     
     def test_program(self):
         parser = self._get_parser('def main() {x=5;\nreturn x;}\n')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context= Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == 5
+        ret = interpreter.execute(visitor)
+        assert ret == 5
     
     def test_includes(self):
         parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); return [s.name, s.age];}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == ["Adam", 22]
+        ret = interpreter.execute(visitor)
+        assert ret == ["Adam", 22]
     
     def test_include_assignment(self):
         parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); b = s.age; return b;}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == 22
+        ret = interpreter.execute(visitor)
+        assert ret == 22
 
     def test_include_change_field_value(self):
         parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); s.age = 23; return s.age;}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == 23
+        ret = interpreter.execute(visitor)
+        assert ret == 23
 
     def test_include_call_method(self):
         parser = self._get_parser('from student import Student; def main() {s = Student("Adam", 22); return s.greet();}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == "Hello, my name is Adam and I am 22 years old."
+        ret = interpreter.execute(visitor)
+        assert ret == "Hello, my name is Adam and I am 22 years old."
     
     def test_include_call_method_many_classes(self):
         parser = self._get_parser("""from student import Student, Class; 
@@ -282,88 +277,79 @@ class TestInterpreter:
                                   class.setTeacher("Nowak"); 
                                   return [a, b, class.getTeacher(), class.getStudents()];}""")
             
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == ["Koc", 35, "Nowak", 40]
+        ret = interpreter.execute(visitor)
+        assert ret == ["Koc", 35, "Nowak", 40]
 
     def test_array_append(self):
         parser = self._get_parser('def main() {lst = [1, 2, 3];\n lst.append(4);\n return lst;}\n')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == [1, 2, 3, 4]
+        ret = interpreter.execute(visitor)
+        assert ret == [1, 2, 3, 4]
     
     def test_array_remove(self):
         parser = self._get_parser('def main() {lst = [1, 2, 3];\n lst.remove(2);\n return lst;}\n')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == [1, 2]
+        ret = interpreter.execute(visitor)
+        assert ret == [1, 2]
 
     def test_array_get(self):
         parser = self._get_parser('def main() {lst = [1, 2, 3];\n lst.append(4);\n return lst.get(0);}\n')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == 1
+        ret = interpreter.execute(visitor)
+        assert ret == 1
     
     def test_while(self):
         parser = self._get_parser('def main() {a = 0; while(a <= 5) {a = a + 1;} return a;}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == 6
+        ret = interpreter.execute(visitor)
+        assert ret == 6
     
     def test_if(self):
         parser = self._get_parser('def main() {a = 5; if(a >= 0) {return a;} else {return 1;}}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == 5
+        assert interpreter.execute(visitor) == 5
     
     def test_if_else(self):
         parser = self._get_parser('def main() {a = 5; if(a >= 6) {return a;} else {return 1;}}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == 1
+        ret = interpreter.execute(visitor)
+        assert ret == 1
     
     def test_lambda_foreach(self):
         parser = self._get_parser('def main() {a = [1, 2, 3]; b = a.foreach($x => { x = x + 1; }); return b;}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        context = Context()
-        visitor.visit_program(result, context)
-        assert context.last_result == [2, 3, 4]
+        ret = interpreter.execute(visitor)
+        assert ret == [2, 3, 4]
     
     def test_lambda_foreach_many_stms(self):
         parser = self._get_parser('def main() {a = [1, 2, 3]; b = a.foreach($x => { y = x + 1; y = y * y; x = y; }); return b;}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
+        ret = interpreter.execute(visitor)
         assert ret == [4, 9, 16]
 
     # do konsultacji
     def test_lambda_where(self):
         parser = self._get_parser('def main() {a = [1, 2, 3]; b = a.where($x => { (x > 1) }); return b;}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
+        ret = interpreter.execute(visitor)
         assert ret == [2, 3]
     
     def test_negation_arth(self):
         parser = self._get_parser('def main() {a = 42; return -a;}')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
+        ret = interpreter.execute(visitor)
         assert ret == -42
     
     def test_negation_logic(self):
@@ -377,9 +363,9 @@ class TestInterpreter:
         returns = []
         for program in programs:
             parser = self._get_parser(program)
-            result = parser.parse_program()
+            interpreter = Interpreter(parser.parse_program())
             visitor = ExecuteVisitor()
-            ret = visitor.visit_program(result, Context())
+            ret = interpreter.execute(visitor)
             returns.append(ret)
         assert returns == [False, False, False, False, True]
     
@@ -391,42 +377,40 @@ class TestInterpreter:
         ]
         for program in programs:
             parser = self._get_parser(program)
-            result = parser.parse_program()
+            interpreter = Interpreter(parser.parse_program())
             visitor = ExecuteVisitor()
             with pytest.raises(TypeError):
-                visitor.visit_program(result, Context())
+                interpreter.execute(visitor)
     
     def test_recursion_within_limit(self):
         parser = self._get_parser('def factorial(n) {if (n <= 1) {return 1;} else {return n * factorial(n - 1);}} def main() {return factorial(5);}')
-        result = parser.parse_program()
-        context = Context(recursion_limit=100)
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, context)
+        ret = interpreter.execute(visitor)
         assert ret == 120
 
     def test_recursion_exceeds_limit(self):
-        parser = self._get_parser('def infiniteRecursion(n) {return infiniteRecursion(n + 1);} def main() {return infiniteRecursion(1);}')
-        result = parser.parse_program()
-        context = Context(recursion_limit=50)
+        parser = self._get_parser('def infiniteRecursion(n) {n = n + 1; print(n); return infiniteRecursion(n + 1);} def main() {return infiniteRecursion(1);}')
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
         with pytest.raises(RecursionLimitExceeded):
-            visitor.visit_program(result, context)
+            interpreter.execute(visitor)
     
     def test_no_reference_args(self):
         parser = self._get_parser('def increment(x) {x = x + 1;} def main() {x = 5; increment(x); return x;}\n')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
+        ret = interpreter.execute(visitor)
         assert ret == 5
     
     def test_reference_args(self):
         parser = self._get_parser('def setZero(x) {x = [0];} def main() {x = [5]; setZero(x); return x;}\n')
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
+        ret = interpreter.execute(visitor)
         assert ret == [0]
     
-    def test_4(self):
+    def test_program_4(self):
         parser = self._get_parser("""def increment(x) {
                                         x = x + 1;
                                         return x;
@@ -438,10 +422,25 @@ class TestInterpreter:
                                         x = increment(x);
                                         print(x);
                                     }""")
-        result = parser.parse_program()
+        interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
-        ret = visitor.visit_program(result, Context())
+        ret = interpreter.execute(visitor)
         assert ret == 0
+    
+    def test_break(self):
+        parser = self._get_parser("""
+                                    def main() {
+                                        x = 5;
+                                        if(x > 1) {
+                                            break;
+                                            x = 6;
+                                        }
+                                        return x;
+                                    }""")
+        interpreter = Interpreter(parser.parse_program())
+        visitor = ExecuteVisitor()
+        ret = interpreter.execute(visitor)
+        assert ret == 5
 
     @staticmethod
     def _get_parser(string: str) -> Parser:
