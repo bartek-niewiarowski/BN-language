@@ -99,7 +99,7 @@ class Parser:
         if not self.try_consume(TokenType.FROM_NAME):
             return None
         position = self.current_token.position
-        library_name = self.must_be(TokenType.ID).value
+        library_name = self.must_be([TokenType.ID, TokenType.STRING_VALUE]).value
         self.must_be(TokenType.IMPORT_NAME)
         object_names = []
         object_name = self.must_be(TokenType.ID).value

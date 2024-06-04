@@ -17,7 +17,7 @@ def main():
                 visitor = ExecuteVisitor()
                 printerVisitor = PrintVisitor()
                 interpreter = Interpreter(parser.parse_program())
-                printerVisitor.visit_program(interpreter.program, interpreter.context)
+                printerVisitor.visit_program(interpreter.program)
                 result = interpreter.execute(visitor)
                 print(result)
         except FileNotFoundError:

@@ -102,6 +102,11 @@ class Array(ObjectValue):
             return Array(self.value + other.value)
         else:
             return NotImplemented
+    
+    # set_value
+    # get_atribute
+    # set_atribute
+    # call_method
 
 class Bool(ObjectValue):
     def __add__(self, other):

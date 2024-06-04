@@ -14,83 +14,74 @@ class TestInterpreter:
     def test_false_and_expression(self):
         parser = self._get_parser('true and false')
         result = parser.parse_and_expression()
-        context = Context()
         visitor = ExecuteVisitor()
-        visitor.visit_and_expression(result, context)
-        assert context.last_result is False
+        visitor.visit_and_expression(result)
+        assert visitor.last_result is False
 
     def test_true_and_expression(self):
         parser = self._get_parser('true and true')
         result = parser.parse_and_expression()
-        context = Context()
         visitor = ExecuteVisitor()
-        visitor.visit_and_expression(result, context)
-        assert context.last_result is True
+        visitor.visit_and_expression(result)
+        assert visitor.last_result is True
     
     def test_true_and_expression_with_int(self):
         parser = self._get_parser('true and 1')
         result = parser.parse_and_expression()
-        context = Context()
         visitor = ExecuteVisitor()
-        visitor.visit_and_expression(result, context)
-        assert context.last_result is True
+        visitor.visit_and_expression(result)
+        assert visitor.last_result is True
     
     def test_true_or_expression(self):
         parser = self._get_parser('true or false')
         result = parser.parse_or_expression()
-        context = Context()
         visitor = ExecuteVisitor()
-        visitor.visit_or_expression(result, context)
-        assert context.last_result is True
+        visitor.visit_or_expression(result)
+        assert visitor.last_result is True
     
     def test_false_or_expression(self):
         parser = self._get_parser('false or false')
         result = parser.parse_or_expression()
-        context = Context()
         visitor = ExecuteVisitor()
-        visitor.visit_or_expression(result, context)
-        assert context.last_result is False
+        visitor.visit_or_expression(result)
+        assert visitor.last_result is False
     
     def test_assignment(self):
         parser = self._get_parser('x = 5;')
         result = parser.parse_function_call_or_assignment()
-        context = Context()
         visitor = ExecuteVisitor()
-        visitor.visit_assignment(result, context)
-        assert context.get_variable('x') == 5
+        visitor.visit_assignment(result)
+        assert visitor.context.get_variable('x') == 5
     
     def test_sum(self):
         expressions = ["1 + 1", "1.5 + 1.5", "2 + 1.5", '"true" + 2', '"true" + 2.5','"true" + " false"', "1+1+1+1+1", "true + false", "[1, 2] + [3, 4]"]
         results = []
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
-            visitor.visit_sum_expression(result, context)
-            results.append(context.last_result)
+            visitor.visit_sum_expression(result)
+            results.append(visitor.last_result)
         assert results == [2, 3.0, 3.5, "true2", "true2.5", "true false", 5, 1, [1, 2, 3, 4]]
     
     def test_sum_invalid_types(self):
         expressions = ['[1, 2, 3] + "abc"', '[1, 2, 3] + false']
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
             with pytest.raises(TypeError):
-                visitor.visit_sum_expression(result, context)\
+                visitor.visit_sum_expression(result)
 
     def test_sub(self):
         expressions = ["1 - 1", "1.5 - 1.5", "2 - 1.5", "true - false", "1-2"]
         results = []
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
-            visitor.visit_sub_expression(result, context)
-            results.append(context.last_result)
+            visitor.visit_sub_expression(result)
+            results.append(visitor.last_result)
         assert results == [0, 0, 0.5, 1, -1]
     
     def test_sub_invalid_types(self):
@@ -106,35 +97,32 @@ class TestInterpreter:
     def test_mul(self):
         expressions = ["1 * 1", "1.5 * 1.5", "2 * 1.5", '3 * "a"','true * "abc"']
         results = []
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
-            visitor.visit_mul_expression(result, context)
-            results.append(context.last_result)
+            visitor.visit_mul_expression(result)
+            results.append(visitor.last_result)
         assert results == [1, 2.25, 3.0, "aaa", "abc"]
 
     def test_mul_invalid_types(self):
         expressions = ['"abc" * "abc"', '[1, 2, 3] * true', '1 * [1, 2, 3], ']
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
             with pytest.raises(TypeError):
-                visitor.visit_mul_expression(result, context)
+                visitor.visit_mul_expression(result)
     
     def test_div(self):
         expressions = ["1 / 1", "1.5 / 1.5", "2 / 1.0"]
         results = []
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
-            visitor.visit_div_expression(result, context)
-            results.append(context.last_result)
+            visitor.visit_div_expression(result)
+            results.append(visitor.last_result)
         assert results == [1, 1, 2.0]
 
     def test_div_invalid_types(self):
@@ -149,86 +137,79 @@ class TestInterpreter:
     
     def test_div_by_zero(self):
         expressions = ['1/0', '1/(2-2)', '1/1*0']
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_arth_expression()
             with pytest.raises(ZeroDivisionError):
-                visitor.visit_div_expression(result, context)
+                visitor.visit_div_expression(result)
     
     def test_comparison_equal(self):
         expressions = ["1 == 1", "1.5 == 1.5", "2 == 1", "true == true", 
                        "true == false", "[1] == [1]", "[1] == [2]"]
         results = []
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            visitor.visit_equal_operation(result, context)
-            results.append(context.last_result)
+            visitor.visit_equal_operation(result)
+            results.append(visitor.last_result)
         assert results == [True, True, False, True, False, True, False]
 
     def test_comparison_not_equal(self):
         expressions = ["1 != 2", "1.5 != 2.5", "2 != 1", "2 != 2", "true != true", 
                        "true != false", "[1] != [1]", "[1] != [2]", '"a" != "b"']
         results = []
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            visitor.visit_not_equal_operation(result, context)
-            results.append(context.last_result)
+            visitor.visit_not_equal_operation(result)
+            results.append(visitor.last_result)
         assert results == [True, True, True, False, False, True, False, True, True]
 
     def test_comparison_greater(self):
         expressions = ["1 > 2", "1.5 > 2.5", "2 > 1", "2 > 2", "true > true", '"a" > "b"']
         results = []
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            visitor.visit_greater_operation(result, context)
-            results.append(context.last_result)
+            visitor.visit_greater_operation(result)
+            results.append(visitor.last_result)
         assert results == [False, False, True, False, False, False]
 
     def test_comparison_greater_equal(self):
         expressions = ["1 >= 2", "1.5 >= 2.5", "2 >= 1", "2 >= 2", "true >= true", '"a" >= "b"']
         results = []
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            visitor.visit_greater_equal_operation(result, context)
-            results.append(context.last_result)
+            visitor.visit_greater_equal_operation(result)
+            results.append(visitor.last_result)
         assert results == [False, False, True, True, True, False]
 
     def test_comparison_less(self):
         expressions = ["1 < 2", "1.5 < 2.5", "2 < 1", "2 < 2", "true < true", '"a" < "b"']
         results = []
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            visitor.visit_less_operation(result, context)
-            results.append(context.last_result)
+            visitor.visit_less_operation(result)
+            results.append(visitor.last_result)
         assert results == [True, True, False, False, False, True]
 
     def test_comparison_less_equal(self):
         expressions = ["1 <= 2", "1.5 <= 2.5", "2 <= 1", "2 <= 2", "true <= true", '"a" <= "b"']
         results = []
-        context = Context()
         visitor = ExecuteVisitor()
         for expression in expressions:
             parser = self._get_parser(expression)
             result = parser.parse_logic_expression()
-            visitor.visit_less_equal_operation(result, context)
-            results.append(context.last_result)
+            visitor.visit_less_equal_operation(result)
+            results.append(visitor.last_result)
         assert results == [True, True, False, True, True, True]        
     
     def test_program(self):
@@ -309,6 +290,13 @@ class TestInterpreter:
         visitor = ExecuteVisitor()
         ret = interpreter.execute(visitor)
         assert ret == 6
+    
+    def test_while_witt_break(self):
+        parser = self._get_parser('def main() {a = 0; while(a <= 5) {a = a + 1; break;} return a;}')
+        interpreter = Interpreter(parser.parse_program())
+        visitor = ExecuteVisitor()
+        ret = interpreter.execute(visitor)
+        assert ret == 1
     
     def test_if(self):
         parser = self._get_parser('def main() {a = 5; if(a >= 0) {return a;} else {return 1;}}')
@@ -427,12 +415,11 @@ class TestInterpreter:
         ret = interpreter.execute(visitor)
         assert ret == 0
     
-    def test_break(self):
+    def test_if_extra(self):
         parser = self._get_parser("""
                                     def main() {
                                         x = 5;
                                         if(x > 1) {
-                                            break;
                                             x = 6;
                                         }
                                         return x;
@@ -440,7 +427,24 @@ class TestInterpreter:
         interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
         ret = interpreter.execute(visitor)
-        assert ret == 5
+        assert ret == 6
+    
+    def test_variable_in_two_context(self):
+        parser = self._get_parser("""
+                                    def lala() {
+                                        print(x);
+                                    }
+                                    def main() {
+                                        x = 5;
+                                        lala();
+                                        return x;
+                                    }""")
+        interpreter = Interpreter(parser.parse_program())
+        visitor = ExecuteVisitor()
+        ret = interpreter.execute(visitor)
+        assert ret == 6
+    
+    
 
     @staticmethod
     def _get_parser(string: str) -> Parser:

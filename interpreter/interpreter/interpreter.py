@@ -4,9 +4,7 @@ from ..parser.syntax_tree import FunctionCall, FunctionArguments
 
 class Context:
     def __init__(self, recursion_limit = 100):
-        self.functions = built_in_functions.copy()
         self.variables = {}
-        self.includes = {}
         self.recursion_depth = 0
         self.recursion_limit = recursion_limit
         self.last_result = None
@@ -25,25 +23,13 @@ class Context:
     def reset_reference(self):
         self.reference_args = []
 
-    def add_function(self, name, fun):
-        self.functions[name] = fun
-
-    def get_function(self, name):
-        func = self.functions.get(name)
-        return func
-
     def add_variable(self, name, value):
         self.variables[name] = value
 
     def get_variable(self, name):
+        if name not in self.variables:
+            raise KeyError(f"Variable '{name}' is not defined.")
         return self.variables.get(name)
-
-    def add_include(self, name, obj):
-        self.includes[name] = obj
-
-    def get_include(self, name):
-        obj = self.includes.get(name)
-        return obj
     
     def increment_recursion_depth(self):
         if self.recursion_depth >= self.recursion_limit:
@@ -56,8 +42,6 @@ class Context:
 
     def new_context(self):
         new_context = Context(self.recursion_limit)
-        new_context.functions = self.functions
-        new_context.includes = self.includes
         new_context.recursion_depth = self.recursion_depth
         return new_context
 
@@ -65,11 +49,10 @@ class Context:
 class Interpreter:
     def __init__(self, program):
         self.program = program
-        self.context = Context()
 
     def execute(self, visitor):
-        self.program.accept(visitor, self.context)
-        main_call = FunctionCall(self.context.functions.get('main').position, 'main', FunctionArguments(self.context.functions.get('main').position, []))
-        main_call.accept(visitor, self.context)
-        ret_code = self.context.last_result if self.context.last_result is not None else 0
+        self.program.accept(visitor)
+        main_call = FunctionCall(visitor.functions.get('main').position, 'main', FunctionArguments(visitor.functions.get('main').position, []))
+        main_call.accept(visitor)
+        ret_code = visitor.last_result if visitor.last_result is not None else 0
         return ret_code
