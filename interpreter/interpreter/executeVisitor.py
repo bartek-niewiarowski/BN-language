@@ -54,7 +54,6 @@ class ExecuteVisitor(Visitor):
             raise ValueError(f"Expected {len(element.parameters)} arguments, got {len(args)}")
         for arg, param in zip(args, element.parameters):
             self.context.add_variable(param, arg)
-            self.context.add_reference(arg, param)
         element.statements.accept(self)
         self.context.return_flag = False
         # break a nie było while, taki błąd
@@ -345,8 +344,6 @@ class ExecuteVisitor(Visitor):
             self.additional_args = (args, method_name)
             function.accept(self)
             self.pop_context()
-            # zamiast zwykłej listy opakowanie w dodatkowy obiekt, możliwe też że obiekty importowane
-            #self.rewrite_reference(context, function_context)
         except RecursionLimitExceeded as e:
             raise e
         finally:
@@ -376,11 +373,6 @@ class ExecuteVisitor(Visitor):
             if class_name == element.function_name:
                 return cls
         return None
-    
-    def rewrite_reference(self, context: Context, function_context: Context):
-        for arg in function_context.reference_args:
-            context.add_variable(arg, function_context.get_variable(arg))
-        function_context.reset_reference()
 
     def visit_statements(self, element: Statements):
         for statement in element.statements:

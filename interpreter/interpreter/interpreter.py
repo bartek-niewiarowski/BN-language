@@ -1,6 +1,17 @@
 from .builtins import built_in_functions
 from .interpreter_error import *
 from ..parser.syntax_tree import FunctionCall, FunctionArguments
+    
+class Array:
+    def __init__(self, value) -> None:
+        self.value = value
+    
+    def set_value(self, value):
+        self.value = value
+
+    def get_value(self):
+        return self.value
+    
 
 class Context:
     def __init__(self, recursion_limit = 100):
@@ -15,16 +26,15 @@ class Context:
     def reset_flags(self):
         self.return_flag = False
         self.break_flag = False
-    
-    def add_reference(self, arg, param):
-        if isinstance(arg, list):
-            self.reference_args.append(param)
-    
-    def reset_reference(self):
-        self.reference_args = []
 
     def add_variable(self, name, value):
-        self.variables[name] = value
+        if isinstance(value, list):
+            if name in self.variables:
+                self.variables[name].set_value(value)
+            else:
+                self.variables[name] = Array(value)
+        else:
+            self.variables[name] = value
 
     def get_variable(self, name):
         if name not in self.variables:
@@ -49,10 +59,16 @@ class Context:
 class Interpreter:
     def __init__(self, program):
         self.program = program
+    
+    def get_nested_value(self, data):
+        if hasattr(data, 'value'):
+            return self.get_nested_value(data.value)
+        else:
+            return data
 
     def execute(self, visitor):
         self.program.accept(visitor)
         main_call = FunctionCall(visitor.functions.get('main').position, 'main', FunctionArguments(visitor.functions.get('main').position, []))
         main_call.accept(visitor)
         ret_code = visitor.last_result if visitor.last_result is not None else 0
-        return ret_code
+        return self.get_nested_value(ret_code)

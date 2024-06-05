@@ -37,29 +37,29 @@ def to_float(x):
     return float(x)
 
 def append(lst, value):
-    lst.append(value)
+    lst.value.append(value)
 
 def remove(lst, index):
-    if 0 <= index < len(lst):
-        lst.pop(index)
+    if 0 <= index < len(lst.value):
+        lst.value.pop(index)
     else:
         raise IndexError("Index out of range")
 
 def sort(lst):
-    if all(isinstance(i, (int, float)) for i in lst):
-        lst.sort()
+    if all(isinstance(i, (int, float)) for i in lst.value):
+        lst.value.sort()
     else:
         raise ValueError("List contains non-numeric elements")
 
 def get(lst, index):
-    if 0 <= index < len(lst):
-        return lst[index]
+    if 0 <= index < len(lst.value):
+        return lst.value[index]
     else:
         raise IndexError("Index out of range")
 
 def where(visitor, lst, name, statements):
     result = []
-    for item in lst:
+    for item in lst.value:
         visitor.context.add_variable(name, item)
         statements.accept(visitor)
         if visitor.last_result:
@@ -68,7 +68,7 @@ def where(visitor, lst, name, statements):
 
 def foreach(visitor, lst, name, statements):
     items = []
-    for item in lst:
+    for item in lst.value:
         visitor.context.add_variable(name, item)
         statements.accept(visitor)
         items.append(visitor.context.variables.get(name))

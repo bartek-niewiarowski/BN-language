@@ -441,8 +441,37 @@ class TestInterpreter:
                                     }""")
         interpreter = Interpreter(parser.parse_program())
         visitor = ExecuteVisitor()
+        with pytest.raises(KeyError):
+            ret = interpreter.execute(visitor)
+    
+    def test_array_as_function_result(self):
+        parser = self._get_parser("""
+                                    def getArray() {
+                                        return [0];
+                                    }
+                                    def main() {
+                                        x = getArray();
+                                        return x;
+                                    }""")
+        interpreter = Interpreter(parser.parse_program())
+        visitor = ExecuteVisitor()
         ret = interpreter.execute(visitor)
-        assert ret == 6
+        assert ret == [0]
+    
+    def test_get_array_from_array(self):
+        parser = self._get_parser("""
+                                    def getArray() {
+                                        return [0];
+                                    }
+                                    def main() {
+                                        x = [getArray()];
+                                        y = x.get(0);
+                                        return y;
+                                    }""")
+        interpreter = Interpreter(parser.parse_program())
+        visitor = ExecuteVisitor()
+        ret = interpreter.execute(visitor)
+        assert ret == [0]
     
     
 
