@@ -51,7 +51,7 @@ class ExecuteVisitor(Visitor):
     def visit_function_definition(self, element):
         args, method_name = self.additional_args
         if len(args) != len(element.parameters):
-            raise ValueError(f"Expected {len(element.parameters)} arguments, got {len(args)}")
+            raise ValueError(f"Expected {len(element.parameters)} arguments, got {len(args)} at postion: {element.position}")
         for arg, param in zip(args, element.parameters):
             self.context.add_variable(param, arg)
         element.statements.accept(self)
@@ -177,13 +177,13 @@ class ExecuteVisitor(Visitor):
                 element.node.accept(self)
                 self.last_result = not self.last_result
             except TypeError:
-                raise TypeError()
+                raise TypeError(f"Invalid negation at position: {element.position}")
         elif element.negation_type == 'Arth':
             try:
                 element.node.accept(self)
                 self.last_result = - self.last_result
             except TypeError:
-                raise TypeError()
+                raise TypeError(f"Invalid negation at position: {element.position}")
 
     def visit_sum_expression(self, element: SumExpression):
         element.left.accept(self)
@@ -399,7 +399,7 @@ class ExecuteVisitor(Visitor):
                 # Wywołujemy metodę z przekazanymi argumentami
                 self.last_result = method(*args)
             else:
-                raise AttributeError(f'Method {method_name} not found or not callable')
+                raise AttributeError(f'Method {method_name} not found or not callable at position')
         else:
             # Jeśli method_name nie jest podane, zachowujemy się jak wcześniej
             if callable(element.obj):
