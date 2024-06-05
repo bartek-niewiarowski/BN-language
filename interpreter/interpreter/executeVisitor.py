@@ -103,8 +103,10 @@ class ExecuteVisitor(Visitor):
         elif element.else_statement:
             element.else_statement.accept(self)
 
-    def visit_while_statement(self, element: WhileStatement) :
-        while True:
+    def visit_while_statement(self, element: WhileStatement):
+        self.context.while_flag = True
+        element.condition.accept(self)
+        while self.last_result:
             self.context.reset_flags()
             element.condition.accept(self)
             if not self.last_result or self.context.break_flag:
@@ -113,8 +115,11 @@ class ExecuteVisitor(Visitor):
             if self.context.return_flag or self.context.break_flag:
                 break
         self.context.break_flag = False
+        self.context.while_flag = False
     
-    def visit_break_statement(self, element) :
+    def visit_break_statement(self, element: BreakStatement) :
+        if not self.context.while_flag:
+            raise RuntimeError(f"Break statement used outside of while loop at position: {element.position}")
         self.context.break_flag = True
         return
 
@@ -307,7 +312,6 @@ class ExecuteVisitor(Visitor):
         self.last_result = value
 
     def visit_assignment(self, element: Assignment):
-        # opakowanie wartosci w obiekcie
         try:
             element.value.accept(self)
             value = self.last_result

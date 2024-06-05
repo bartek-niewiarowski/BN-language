@@ -473,6 +473,17 @@ class TestInterpreter:
         ret = interpreter.execute(visitor)
         assert ret == [0]
     
+    def test_invalid_break(self):
+        parser = self._get_parser("""
+                                    def main() {
+                                        x = 5;
+                                        break;
+                                        return x;
+                                    }""")
+        interpreter = Interpreter(parser.parse_program())
+        visitor = ExecuteVisitor()
+        with pytest.raises(RuntimeError):
+            ret = interpreter.execute(visitor)
     
 
     @staticmethod

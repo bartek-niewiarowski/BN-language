@@ -21,6 +21,7 @@ class Context:
         self.last_result = None
         self.return_flag = False
         self.break_flag = False
+        self.while_flag = False
         self.reference_args = []
     
     def reset_flags(self):
