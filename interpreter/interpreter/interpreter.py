@@ -14,15 +14,9 @@ class Array:
     
 
 class Context:
-    def __init__(self, recursion_limit = 100):
+    def __init__(self):
         self.variables = {}
-        self.recursion_depth = 0
-        self.recursion_limit = recursion_limit
-        self.last_result = None
-        self.return_flag = False
-        self.break_flag = False
-        self.while_flag = False
-        self.reference_args = []
+        self.while_flag = 0 # licznik while
     
     def reset_flags(self):
         self.return_flag = False
@@ -41,20 +35,9 @@ class Context:
         if name not in self.variables:
             raise KeyError(f"Variable '{name}' is not defined.")
         return self.variables.get(name)
-    
-    def increment_recursion_depth(self):
-        if self.recursion_depth >= self.recursion_limit:
-            raise RecursionLimitExceeded()
-        self.recursion_depth += 1
-
-    def decrement_recursion_depth(self):
-        if self.recursion_depth > 0:
-            self.recursion_depth -= 1
 
     def new_context(self):
-        new_context = Context(self.recursion_limit)
-        new_context.recursion_depth = self.recursion_depth
-        return new_context
+        return Context()
 
 
 class Interpreter:

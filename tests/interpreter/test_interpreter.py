@@ -485,6 +485,42 @@ class TestInterpreter:
         with pytest.raises(RuntimeError):
             ret = interpreter.execute(visitor)
     
+    def test_mul_whiles(self):
+        parser = self._get_parser("""
+                                    def main() {
+                                        while (true) {
+                                            while (true) {
+                                            break;
+                                        }
+                                        x = 1;
+                                        break; 
+                                        }
+                                        return x;
+                                    }""")
+        interpreter = Interpreter(parser.parse_program())
+        visitor = ExecuteVisitor()
+        ret = interpreter.execute(visitor)
+        assert ret == 1
+
+    def test_void_function(self):
+        parser = self._get_parser("""
+                                    def returnInt() {
+                                        return 1;
+                                    }
+
+                                    def voidF() {
+                                        print();
+                                    }
+                                    def main() {
+                                        returnInt();
+                                        print(voidF());
+                                        return;
+                                    }""")
+        interpreter = Interpreter(parser.parse_program())
+        visitor = ExecuteVisitor()
+        ret = interpreter.execute(visitor)
+        assert ret == 0
+    
 
     @staticmethod
     def _get_parser(string: str) -> Parser:

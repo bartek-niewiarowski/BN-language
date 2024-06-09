@@ -7,14 +7,27 @@ import sys, os
 from .builtins import ImportedObject, built_in_functions
 
 class ExecuteVisitor(Visitor):
-    def __init__(self):
+    def __init__(self, recursion_limit=100):
         super().__init__()
         self.functions = built_in_functions.copy()
         self.includes = {}
         self.context_stack = [Context()]
-        self.context = self.context_stack[-1]
+        self.context = self.context_stack[-1] 
         self.last_result = None
         self.additional_args = None
+        self.recursion_depth = 0
+        self.recursion_limit = recursion_limit
+        self.return_flag = False
+        self.break_flag = False
+    
+    def increment_recursion_depth(self):
+        if self.recursion_depth >= self.recursion_limit:
+            raise RecursionLimitExceeded()
+        self.recursion_depth += 1
+
+    def decrement_recursion_depth(self):
+        if self.recursion_depth > 0:
+            self.recursion_depth -= 1
     
     def add_function(self, name, fun):
         self.functions[name] = fun
@@ -55,8 +68,7 @@ class ExecuteVisitor(Visitor):
         for arg, param in zip(args, element.parameters):
             self.context.add_variable(param, arg)
         element.statements.accept(self)
-        self.context.return_flag = False
-        # break a nie było while, taki błąd
+        self.return_flag = False
 
     def visit_include_statement(self, element: IncludeStatement):
         library_name = element.library_name
@@ -77,10 +89,14 @@ class ExecuteVisitor(Visitor):
 
     def visit_lambda_expression(self, element: LambdaExpression):
         self.context.add_variable(element.variable_name, None)
-        self.last_result = element.variable_name
+        self.last_result = [element.variable_name, element.statements]
 
     def visit_function_arguments(self, element):
-        self.last_result = [arg.accept(self) for arg in element.arguments]
+        args = []
+        for arg in element.arguments:
+            arg.accept(self)
+            args.append(self.last_result)
+        self.last_result = args
 
     def visit_identifier(self, element: Identifier):
         if element.parent is not None:
@@ -93,8 +109,9 @@ class ExecuteVisitor(Visitor):
         pass
 
     def visit_return_statement(self, element):
-        element.statement.accept(self)
-        self.context.return_flag = True
+        if element.statement is not None:
+            element.statement.accept(self)
+        self.return_flag = True
 
     def visit_if_statement(self, element: IfStatement):
         element.condition.accept(self)
@@ -104,23 +121,23 @@ class ExecuteVisitor(Visitor):
             element.else_statement.accept(self)
 
     def visit_while_statement(self, element: WhileStatement):
-        self.context.while_flag = True
+        self.context.while_flag += 1
         element.condition.accept(self)
         while self.last_result:
             self.context.reset_flags()
             element.condition.accept(self)
-            if not self.last_result or self.context.break_flag:
+            if not self.last_result or self.break_flag:
                 break
             element.statements.accept(self)
-            if self.context.return_flag or self.context.break_flag:
+            if self.return_flag or self.break_flag:
                 break
-        self.context.break_flag = False
-        self.context.while_flag = False
+        self.break_flag = False
+        self.context.while_flag -= 1
     
     def visit_break_statement(self, element: BreakStatement) :
-        if not self.context.while_flag:
+        if self.context.while_flag == 0:
             raise RuntimeError(f"Break statement used outside of while loop at position: {element.position}")
-        self.context.break_flag = True
+        self.break_flag = True
         return
 
     def visit_or_expression(self, element: OrExpression) :
@@ -328,7 +345,7 @@ class ExecuteVisitor(Visitor):
     
     def visit_function_call(self, element: FunctionCall):
         try:
-            self.context.increment_recursion_depth()
+            self.increment_recursion_depth()
             if element.parent is not None:
                 element.parent.accept(self)
                 parent_value = self.last_result
@@ -337,7 +354,7 @@ class ExecuteVisitor(Visitor):
             
             args = self.get_args(element, parent_value)
             
-            if function := self.get_function(element.function_name) or self.get_constructor(element):
+            if function := self.get_function(element.function_name):
                 method_name = None 
             elif function := self.get_class_method(element):
                 method_name = element.function_name
@@ -351,17 +368,12 @@ class ExecuteVisitor(Visitor):
         except RecursionLimitExceeded as e:
             raise e
         finally:
-            self.context.decrement_recursion_depth()
+            self.decrement_recursion_depth()
     
     def get_args(self, element, parent_value):
         args = []
-        if isinstance(element.arguments, FunctionArguments):
-            for arg in element.arguments.arguments:
-                arg.accept(self)
-                args.append(self.last_result)
-        elif isinstance(element.arguments, LambdaExpression):
-            element.arguments.accept(self)
-            args = [self.last_result, element.arguments.statements]
+        element.arguments.accept(self)
+        args = self.last_result
         if parent_value:
             args = [parent_value] + args
         return args
@@ -371,17 +383,11 @@ class ExecuteVisitor(Visitor):
             if hasattr(obj, 'obj') and hasattr(obj.obj, element.function_name):
                 return obj
         return None
-    
-    def get_constructor(self, element):   
-        for class_name, cls in self.functions.items():
-            if class_name == element.function_name:
-                return cls
-        return None
 
     def visit_statements(self, element: Statements):
         for statement in element.statements:
             statement.accept(self)
-            if self.context.return_flag or self.context.break_flag:
+            if self.return_flag or self.break_flag:
                 break
     
     def visit_built_in_function(self, element):
@@ -391,17 +397,13 @@ class ExecuteVisitor(Visitor):
     
     def visit_imported_object(self, element):
         args, method_name = self.additional_args
-        # kolejny visit do executeVisitor
         if method_name:
-            # Sprawdzamy, czy obj posiada metodę o nazwie method_name
             method = getattr(element.obj, method_name, None)
             if method and callable(method):
-                # Wywołujemy metodę z przekazanymi argumentami
                 self.last_result = method(*args)
             else:
                 raise AttributeError(f'Method {method_name} not found or not callable at position')
         else:
-            # Jeśli method_name nie jest podane, zachowujemy się jak wcześniej
             if callable(element.obj):
                 self.last_result = element.obj(*args)
             elif hasattr(element.obj, '__call__'):
