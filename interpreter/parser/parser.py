@@ -99,7 +99,7 @@ class Parser:
         if not self.try_consume(TokenType.FROM_NAME):
             return None
         position = self.current_token.position
-        library_name = self.must_be(TokenType.ID).value
+        library_name = self.must_be([TokenType.ID, TokenType.STRING_VALUE]).value
         self.must_be(TokenType.IMPORT_NAME)
         object_names = []
         object_name = self.must_be(TokenType.ID).value
@@ -119,7 +119,8 @@ class Parser:
         variable_name = self.must_be(TokenType.ID).value
 
         self.must_be(TokenType.LAMBDA_OPERATOR)
-        if not (statements := self.parse_statements()):
+        if not (statements := self.parse_statements() \
+                or self.parse_or_expression()):
             ExpectedBlockStatements(self.current_token, 'Expected block statements after lambda expression')
         return LambdaExpression(position, variable_name, statements)
     
@@ -205,7 +206,8 @@ class Parser:
             or self.parse_if_statement() \
             or self.parse_break_statement() \
             or self.parse_while_statement() \
-            or self.parse_function_call_or_assignment():
+            or self.parse_function_call_or_assignment() \
+            or self.parse_or_expression():
             return stm
         return None
     
@@ -304,30 +306,24 @@ class Parser:
     # wyrzucic negacje, AddExpression, SubExpression, kolejna mapa 
     def parse_arth_expression(self):
         if left := self.parse_term():
-            expressions = [SumExpression(self.current_token.position, left)]
             while creator := self.ARTH_OPERATORS.get(self.current_token.type):
                 self.consume_token()
                 if not (next_expr := self.parse_term()):
                     raise InvalidArthExpression(self.current_token)
-                expressions.append(creator(self.current_token.position, next_expr))
-            if len(expressions) == 1:
-                return left                   
-            return expressions
+                left = creator(self.current_token.position, left,  next_expr)
+            return left
         return None
     
     # term = factor, { multiply_operator, factor }; 
     def parse_term(self):
         if left := self.parse_factor():
-            expressions = [MulExpression(self.current_token.position, left)]
             while creator := self.MUL_OPERATORS.get(self.current_token.type):
                 self.consume_token()
                 if next_expr := self.parse_factor():
-                    expressions.append(creator(self.current_token.position, next_expr))
+                    left = creator(self.current_token.position, left, next_expr)
                 else:
-                    raise InvalidTerm(self.current_token)
-            if len(expressions) == 1:
-                return left                     
-            return expressions
+                    raise InvalidTerm(self.current_token)              
+            return left
         return None
     
     # factor = [negation_operator], (literal_value | object_expression | function_call | "(", arth_expression, ")");
@@ -335,15 +331,19 @@ class Parser:
     def parse_factor(self):
         position = self.current_token.position
         is_negation = False
-        if self.try_consume([TokenType.NEGATION_OPERATOR, TokenType.SUB_OPERATOR]):
+        if negation_token := self.try_consume([TokenType.NEGATION_OPERATOR, TokenType.SUB_OPERATOR]):
             is_negation = True
+            if negation_token.type == TokenType.NEGATION_OPERATOR:
+                negation_type = 'Logic'
+            else:
+                negation_type = 'Arth'
         factor = \
             self.parse_variable_value() \
             or self.parse_function_call_or_object_expression() \
             or self.parse_expression()
         if factor:
             if is_negation:
-                factor = Negation(position, factor)
+                factor = Negation(position, factor, negation_type)
             return factor
         if is_negation and not factor:
             raise InvalidFactor(self.current_token)

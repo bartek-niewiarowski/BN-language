@@ -1,0 +1,5 @@
+from student import Student; 
+def main() {
+    s = Student(1, 10); 
+    return s.age;
+}

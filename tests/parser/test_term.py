@@ -17,21 +17,25 @@ class TestParseTerm:
     def test_multiplication(self):
         parser = self._get_parser('3 * 4')
         result = parser.parse_term()
-        assert result[0].node.value == 3
-        assert result[1].node.value == 4
+        assert isinstance(result, MulExpression)
+        assert result.left.value == 3
+        assert result.right.value == 4
 
     def test_division(self):
         parser = self._get_parser('10 / 2')
         result = parser.parse_term()
-        assert result[0].node.value == 10
-        assert result[1].node.value == 2
+        assert isinstance(result, DivExpression)
+        assert result.left.value == 10
+        assert result.right.value == 2
 
     def test_combined_multiplication_division(self):
         parser = self._get_parser('4 * 3 / 2')
         result = parser.parse_term()
-        assert result[0].node.value == 4
-        assert result[1].node.value == 3
-        assert result[2].node.value == 2
+        assert isinstance(result, DivExpression)
+        assert isinstance(result.left, MulExpression)
+        assert result.left.left.value == 4
+        assert result.left.right.value == 3
+        assert result.right.value == 2
 
     def test_no_operators(self):
         parser = self._get_parser('x')
@@ -47,32 +51,39 @@ class TestParseTerm:
     def test_division_by_zero_static(self):
         parser = self._get_parser('x / 0')
         result = parser.parse_term()
-        assert result[0].node.name == 'x'
-        assert result[1].node.value == 0
+        assert isinstance(result, DivExpression)
+        assert isinstance(result.left, Identifier)
+        assert result.left.name == 'x'
+        assert result.right.value == 0
 
     def test_chained_multiplications(self):
         parser = self._get_parser('2 * 2 * 2')
         result = parser.parse_term()
-        assert result[0].node.value == 2
-        assert result[1].node.value == 2
-        assert result[2].node.value == 2
-
+        assert isinstance(result, MulExpression)
+        assert isinstance(result.left, MulExpression)
+        assert result.left.left.value == 2
+        assert result.left.right.value == 2
+        assert result.right.value == 2
 
     def test_complex_expression(self):
         parser = self._get_parser('2 * (3 + 4)')
         result = parser.parse_term()
-        pass
-        assert result[0].node.value == 2
-        assert result[1].node[0].node.value == 3
+        assert isinstance(result, MulExpression)
+        assert result.left.value == 2
+        assert isinstance(result.right, SumExpression)
+        assert result.right.left.value == 3
+        assert result.right.right.value == 4
 
     def test_nested_parentheses(self):
         parser = self._get_parser('((3 + 2) * (1 + 1))')
         result = parser.parse_arth_expression()
-        pass
-        assert len(result) == 2
-        assert result[0].node[0].node.value == 3
-        assert result[0].node[1].node.value == 2
-        assert isinstance(result[1], MulExpression)
+        assert isinstance(result, MulExpression)
+        assert isinstance(result.left, SumExpression)
+        assert result.left.left.value == 3
+        assert result.left.right.value == 2
+        assert isinstance(result.right, SumExpression)
+        assert result.right.left.value == 1
+        assert result.right.right.value == 1
     
     @staticmethod
     def _get_parser(string: str) -> Parser:

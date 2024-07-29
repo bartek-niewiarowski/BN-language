@@ -1,0 +1,9 @@
+def lala() {
+    print("Tutaj", x);
+}
+
+def main() {
+    x = 6;
+    lala();
+    return 0;
+}
